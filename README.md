@@ -1,4 +1,5 @@
-<img src="https://mauricixx.github.io/multimedial/img/Multimedial_gif.gif" width="300" height="auto" />
+<img src="https://mauricixx.github.io/multimedial/img/Multimedial_gif.gif" width="auto" height="auto" />
+
 ## Taller Multimedial.
 
 ### 1. Acercamiento a [TouchDesigner](https://derivative.ca).
