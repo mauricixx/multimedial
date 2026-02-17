@@ -4,8 +4,7 @@
 
 ## MÓDULO 1: INTRODUCCIÓN Y FUNDAMENTOS (Clases 1-3)
 
-### Clase 1: Bienvenida a TouchDesigner
-**Duración:** 90 minutos
+### Clase 1: Bienvenida a [TouchDesigner](https://derivative.ca).
 
 **Objetivos:**
 - Entender qué es TouchDesigner y sus aplicaciones
@@ -23,10 +22,29 @@
 **Tarea:**
 Explorar la interfaz y crear 3 pequeñas redes usando diferentes familias de OPs
 
----
-
-### 1. Acercamiento a [TouchDesigner](https://derivative.ca).
-
-#### Qué es TouchDesigner? 
+#### - Qué es TouchDesigner? 
 > Es un lenguaje de programación visual basado en nodos para contenido multimedia interactivo en tiempo real . Desarrollado por la empresa  ["Derivative"](https://derivative.ca) de Toronto, es utilizado frecuentemente por artistas, programadores, codificadores creativos, diseñadores de software y artistas para crear performances, instalaciones y obras multimedia fijas. [1](https://en.wikipedia.org/wiki/TouchDesigner)
+
+### Clase 2: Las Familias de Operadores
+**Duración:** 90 minutos
+
+**Objetivos:**
+- Comprender las 6 familias de operadores
+- Entender el flujo de datos en TouchDesigner
+- Crear conexiones básicas
+
+**Contenidos:**
+- TOPs (Texture Operators) - Procesamiento de imágenes 2D
+- CHOPs (Channel Operators) - Datos numéricos y animación
+- SOPs (Surface Operators) - Geometría 3D
+- MATs (Materials) - Shaders y texturas
+- DATs (Data Operators) - Texto y datos
+- COMPs (Components) - Contenedores y componentes
+- Conectar diferentes familias
+- Ejercicio: Cadena simple con cada familia
+
+**Tarea:**
+Crear un diagrama de red usando al menos 4 familias diferentes
+
+---
 
