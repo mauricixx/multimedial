@@ -1,10 +1,8 @@
 <img src="https://mauricixx.github.io/multimedial/img/Multimedial_gif.gif" width="auto" height="auto" />
 
-# Taller Multimedial.
+### MÓDULO 1: INTRODUCCIÓN Y FUNDAMENTOS (Clases 1-3)
 
-## MÓDULO 1: INTRODUCCIÓN Y FUNDAMENTOS (Clases 1-3)
-
-### Clase 1: Bienvenida a [TouchDesigner](https://derivative.ca).
+#### Clase 1: Bienvenida a [TouchDesigner](https://derivative.ca).
 
 **Objetivos:**
 - Entender qué es TouchDesigner y sus aplicaciones
