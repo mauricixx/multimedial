@@ -1,5 +1,6 @@
 <img src="https://mauricixx.github.io/multimedial/img/Multimedial_gif.gif" width="auto" height="auto" />
 
+<!--
 ### MÓDULO 1: INTRODUCCIÓN Y FUNDAMENTOS (Clases 1-3)
 
 #### Clase 1: Bienvenida a [TouchDesigner](https://derivative.ca).
@@ -45,4 +46,6 @@ Explorar la interfaz y crear 3 pequeñas redes usando diferentes familias de OPs
 Crear un diagrama de red usando al menos 4 familias diferentes
 
 ---
+-->
+
 
