@@ -1,5 +1,10 @@
 <img src="https://mauricixx.github.io/multimedial/img/Multimedial_gif.gif" width="auto" height="auto" />
 
+#### Exploración creativa de arte, tecnología y medios digitales interactivos.
+
+#### Cultura web y arte digital.
+##### Introducción a plataformas web para artistas.
+
 <!--
 ### MÓDULO 1: INTRODUCCIÓN Y FUNDAMENTOS (Clases 1-3)
 
