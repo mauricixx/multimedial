@@ -76,22 +76,22 @@ MULTIMEDIAL
 <!-- Fin del documento HTML -->
 ```
 
-##### Ejercico 2, semana 2: Enlaces (links)
+## Ejercico 2, semana 2: Enlaces (links)
 1. Ejemplo básico:
 ```
 <a href="pagina2.html">Ir a la página 2</a>
 ```
-Explicación:
-	•	<a> → etiqueta de enlace.
-	•	href → atributo que indica a qué página se va a enlazar.
-	•	"pagina2.html" → archivo o dirección a la que se va.
-	•	Ir a la página 2 → texto visible del enlace.
-	•	</a> → cierre de la etiqueta.
+### Explicación:
+<a> → etiqueta de enlace.
+href → atributo que indica a qué página se va a enlazar.
+"pagina2.html" → archivo o dirección a la que se va.
+Ir a la página 2 → texto visible del enlace.
+</a> → cierre de la etiqueta.
 
-Cuando una persona hace clic en “Ir a la página 2”, el navegador abre pagina2.html.
+#### Cuando una persona hace clic en “Ir a la página 2”, el navegador abre pagina2.html.
 
-2. Ejemplo con dos páginas:
-index.html
+### 2 Ejemplo con dos páginas:
+##### index.html
 ```
 <!DOCTYPE html>
 <html>
@@ -108,7 +108,7 @@ index.html
 </body>
 </html>
 ```
-pagina2.html
+##### pagina2.html
 ```
 <!DOCTYPE html>
 <html>
@@ -125,27 +125,27 @@ pagina2.html
 </body>
 </html>
 ```
-Aquí ocurre algo importante:
-	•	index.html → enlaza a pagina2.html
-	•	pagina2.html → vuelve a index.html
+##### Aquí ocurre algo importante:
+index.html → enlaza a pagina2.html
+pagina2.html → vuelve a index.html
 
-Esto crea una navegación simple entre páginas.
+##### Esto crea una navegación simple entre páginas.
 
-3. Abrir el link en otra pestaña
+### 3. Abrir el link en otra pestaña
    qué es href?
 es un atributo de HTML que significa Hypertext Reference (Referencia de Hipertexto). Se utiliza principalmente dentro de la etiqueta de anclaje <a> para definir el destino de un enlace o hipervínculo, indicando al navegador la URL o archivo al que debe dirigirse al hacer clic.
 ```
 <a href="https://www.wikipedia.org" target="_blank">Ir a Wikipedia</a>
 ```
-target="_blank" significa que el enlace se abre en una nueva pestaña.
+##### target="_blank" significa que el enlace se abre en una nueva pestaña.
 
 ##### Concepto clave para recordar.
-HTML usa esta estructura:
+##### HTML usa esta estructura:
 ```
 <a href="direccion">texto del enlace</a>
 ```
 
-Ejercicio 2.1: Primer enlace
+### Ejercicio 2.1: Primer enlace
 
 Objetivo: entender cómo funciona un link básico.
 
@@ -153,7 +153,7 @@ Instrucción:
 
 Crear una página con un enlace a otra.
 
-archivo: index.html
+##### archivo: index.html
 ```
 <!DOCTYPE html>
 <html>
@@ -170,7 +170,7 @@ archivo: index.html
 </body>
 </html>
 ```
-archivo: pagina2.html
+##### archivo: pagina2.html
 ```
 <!DOCTYPE html>
 <html>
@@ -185,22 +185,22 @@ archivo: pagina2.html
 </body>
 </html>
 ```
-Ejercicio 2.2: Navegación ida y vuelta
+### Ejercicio 2.2: Navegación ida y vuelta
 Objetivo: entender la lógica de navegación (como sistema).
 
-Modificar pagina2.html:
+##### Modificar pagina2.html:
 ```
 <a href="index.html">Volver al inicio</a>
 ```
-Ejercicio 2.3: Mini sitio (3 páginas conectadas)
+### Ejercicio 2.3: Mini sitio (3 páginas conectadas)
 Objetivo: pensar en estructura + narrativa.
 
-Crear 3 páginas:
-	•	index.html
-	•	obra.html
-	•	contacto.html
+#### Crear 3 páginas:
+index.html
+obra.html
+contacto.html
 
-index.html:
+##### index.html:
 ```
 <h1>Mi sitio</h1>
 
@@ -217,7 +217,7 @@ obra.html
 <a href="contacto.html">Contacto</a>
 ```
 
-contacto.html:
+##### contacto.html:
 ```
 <h1>Contacto</h1>
 
@@ -226,23 +226,24 @@ contacto.html:
 <a href="index.html">Inicio</a><br>
 <a href="obra.html">Obra</a>
 ```
-Ejercicio 2.4 insertar imágenes en cada página.
+### Ejercicio 2.4 insertar imágenes en cada página.
 
-Sintaxis básica:
+##### Sintaxis básica:
 ```
 <img src="imagen.jpg" alt="descripción">
 ```
-Explicación:
-	•	src → ruta de la imagen
-	•	alt → texto alternativo (muy importante, describe la imagen)
+##### Explicación:
+src → ruta de la imagen
+alt → texto alternativo (muy importante, describe la imagen)
 
-  Ejercicio: insertar imágenes en cada página:
+##### Ejercicio: insertar imágenes en cada página:
   Supongamos que tienes estas imágenes en la misma carpeta:
-	•	obra.jpg
-	•	contacto.jpg
-	•	inicio.jpg
-Ejemplo:
-index.html:
+obra.jpg
+contacto.jpg
+inicio.jpg
+
+##### Ejemplo:
+##### index.html:
 ```
 <!DOCTYPE html>
 <html>
@@ -264,7 +265,7 @@ index.html:
 </body>
 </html>
 ```
-obra.html:
+##### obra.html:
 ```
 <!DOCTYPE html>
 <html>
@@ -286,7 +287,7 @@ obra.html:
 </body>
 </html>
 ```
-contacto.html:
+##### contacto.html:
 ```
 <!DOCTYPE html>
 <html>
@@ -308,13 +309,14 @@ contacto.html:
 </body>
 </html>
 ```
-Cosas importantes (errores comunes)
-	•	La imagen debe estar en la misma carpeta o usar rutas correctas
-	•	El nombre debe coincidir exactamente:
-X Obra.jpg ≠ obra.jpg
-	•	Siempre usar alt (accesibilidad + buenas prácticas)
+##### Cosas importantes (errores comunes)
+La imagen debe estar en la misma carpeta o usar rutas correctas
+El nombre debe coincidir exactamente:
 
-  ##### Bonus: Hacer la imagen clickeable (como link)
+X Obra.jpg ≠ obra.jpg
+Siempre usar alt (accesibilidad + buenas prácticas)
+
+##### Bonus: Hacer la imagen clickeable (como link)
   ```
 <a href="obra.html">
   <img src="inicio.jpg" alt="Ir a obra" width="300">
