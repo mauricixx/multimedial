@@ -4,7 +4,7 @@
 
 #### Cultura web y arte digital.
 
-Ejercico 1, semana 1:
+##### Ejercico 1, semana 1:
 ``` 
 <!DOCTYPE html>
 <!-- Indica al navegador que este documento usa HTML5 -->
@@ -75,6 +75,322 @@ MULTIMEDIAL
 </html>
 <!-- Fin del documento HTML -->
 ```
+
+##### Ejercico 2, semana 2: Enlaces (links)
+1. Ejemplo básico:
+```
+<a href="pagina2.html">Ir a la página 2</a>
+```
+Explicación:
+	•	<a> → etiqueta de enlace.
+	•	href → atributo que indica a qué página se va a enlazar.
+	•	"pagina2.html" → archivo o dirección a la que se va.
+	•	Ir a la página 2 → texto visible del enlace.
+	•	</a> → cierre de la etiqueta.
+
+Cuando una persona hace clic en “Ir a la página 2”, el navegador abre pagina2.html.
+
+2. Ejemplo con dos páginas:
+index.html
+```
+<!DOCTYPE html>
+<html>
+<head>
+<title>Mi sitio</title>
+</head>
+
+<body>
+
+<h1>Página principal</h1>
+
+<a href="pagina2.html">Ir a la segunda página</a>
+
+</body>
+</html>
+```
+pagina2.html
+```
+<!DOCTYPE html>
+<html>
+<head>
+<title>Página 2</title>
+</head>
+
+<body>
+
+<h1>Esta es la segunda página</h1>
+
+<a href="index.html">Volver a la página principal</a>
+
+</body>
+</html>
+```
+Aquí ocurre algo importante:
+	•	index.html → enlaza a pagina2.html
+	•	pagina2.html → vuelve a index.html
+
+Esto crea una navegación simple entre páginas.
+
+3. Abrir el link en otra pestaña
+   qué es href?
+es un atributo de HTML que significa Hypertext Reference (Referencia de Hipertexto). Se utiliza principalmente dentro de la etiqueta de anclaje <a> para definir el destino de un enlace o hipervínculo, indicando al navegador la URL o archivo al que debe dirigirse al hacer clic.
+```
+<a href="https://www.wikipedia.org" target="_blank">Ir a Wikipedia</a>
+```
+target="_blank" significa que el enlace se abre en una nueva pestaña.
+
+##### Concepto clave para recordar.
+HTML usa esta estructura:
+```
+<a href="direccion">texto del enlace</a>
+```
+
+Ejercicio 2.1: Primer enlace
+
+Objetivo: entender cómo funciona un link básico.
+
+Instrucción:
+
+Crear una página con un enlace a otra.
+
+archivo: index.html
+```
+<!DOCTYPE html>
+<html>
+<head>
+<title>Inicio</title>
+</head>
+
+<body>
+
+<h1>Hola</h1>
+
+<a href="pagina2.html">Ir a otra página</a>
+
+</body>
+</html>
+```
+archivo: pagina2.html
+```
+<!DOCTYPE html>
+<html>
+<head>
+<title>Página 2</title>
+</head>
+
+<body>
+
+<h1>Llegaste a la página 2</h1>
+
+</body>
+</html>
+```
+Ejercicio 2.2: Navegación ida y vuelta
+Objetivo: entender la lógica de navegación (como sistema).
+
+Modificar pagina2.html:
+```
+<a href="index.html">Volver al inicio</a>
+```
+Ejercicio 2.3: Mini sitio (3 páginas conectadas)
+Objetivo: pensar en estructura + narrativa.
+
+Crear 3 páginas:
+	•	index.html
+	•	obra.html
+	•	contacto.html
+
+index.html:
+```
+<h1>Mi sitio</h1>
+
+<a href="obra.html">Obra</a><br>
+<a href="contacto.html">Contacto</a>
+```
+obra.html
+```
+<h1>Mi obra</h1>
+
+<p>Descripción de mi trabajo artístico</p>
+
+<a href="index.html">Inicio</a><br>
+<a href="contacto.html">Contacto</a>
+```
+
+contacto.html:
+```
+<h1>Contacto</h1>
+
+<p>email@email.com</p>
+
+<a href="index.html">Inicio</a><br>
+<a href="obra.html">Obra</a>
+```
+Ejercicio 2.4 insertar imágenes en cada página.
+
+Sintaxis básica:
+```
+<img src="imagen.jpg" alt="descripción">
+```
+Explicación:
+	•	src → ruta de la imagen
+	•	alt → texto alternativo (muy importante, describe la imagen)
+
+  Ejercicio: insertar imágenes en cada página:
+  Supongamos que tienes estas imágenes en la misma carpeta:
+	•	obra.jpg
+	•	contacto.jpg
+	•	inicio.jpg
+Ejemplo:
+index.html:
+```
+<!DOCTYPE html>
+<html>
+<head>
+<title>Inicio</title>
+</head>
+
+<body>
+
+<h1>Mi sitio</h1>
+
+<img src="inicio.jpg" alt="Imagen de inicio" width="300">
+
+<br><br>
+
+<a href="obra.html">Obra</a><br>
+<a href="contacto.html">Contacto</a>
+
+</body>
+</html>
+```
+obra.html:
+```
+<!DOCTYPE html>
+<html>
+<head>
+<title>Obra</title>
+</head>
+
+<body>
+
+<h1>Mi obra</h1>
+
+<img src="obra.jpg" alt="Imagen de la obra" width="300">
+
+<p>Descripción de mi trabajo artístico</p>
+
+<a href="index.html">Inicio</a><br>
+<a href="contacto.html">Contacto</a>
+
+</body>
+</html>
+```
+contacto.html:
+```
+<!DOCTYPE html>
+<html>
+<head>
+<title>Contacto</title>
+</head>
+
+<body>
+
+<h1>Contacto</h1>
+
+<img src="contacto.jpg" alt="Imagen de contacto" width="300">
+
+<p>email@email.com</p>
+
+<a href="index.html">Inicio</a><br>
+<a href="obra.html">Obra</a>
+
+</body>
+</html>
+```
+Cosas importantes (errores comunes)
+	•	La imagen debe estar en la misma carpeta o usar rutas correctas
+	•	El nombre debe coincidir exactamente:
+X Obra.jpg ≠ obra.jpg
+	•	Siempre usar alt (accesibilidad + buenas prácticas)
+
+  ##### Bonus: Hacer la imagen clickeable (como link)
+  ```
+<a href="obra.html">
+  <img src="inicio.jpg" alt="Ir a obra" width="300">
+</a>
+```
+Esto transforma la imagen en un botón visual.
+
+Modelo a seguir con explicación línea por línea:
+```
+<!DOCTYPE html> <!-- Indica al navegador que este documento usa HTML5 -->
+
+<html> <!-- Inicio del documento HTML -->
+
+<head> <!-- Sección de configuración (no visible en la página) -->
+
+<title>Inicio</title> <!-- Título que aparece en la pestaña del navegador -->
+
+</head> <!-- Cierre de la sección head -->
+
+<body> <!-- Inicio del contenido visible de la página -->
+
+<h1>Mi sitio</h1> <!-- Título principal grande -->
+
+<img src="inicio.jpg" alt="Imagen de inicio" width="300"> 
+<!-- Inserta una imagen:
+     src = archivo de imagen
+     alt = descripción de la imagen
+     width = ancho en píxeles -->
+
+<br><br> <!-- Saltos de línea para generar espacio -->
+
+<a href="obra.html">Obra</a><br> 
+<!-- Enlace a otra página llamada "obra.html" -->
+<!-- <br> agrega un salto de línea -->
+
+<a href="contacto.html">Contacto</a> 
+<!-- Enlace a otra página llamada "contacto.html" -->
+
+</body> <!-- Cierre del contenido visible -->
+
+</html> <!-- Fin del documento HTML -->
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
