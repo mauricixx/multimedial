@@ -131,7 +131,7 @@ pagina2.html → vuelve a index.html
 
 ##### Esto crea una navegación simple entre páginas.
 
-### 3. Abrir el link en otra pestaña
+### Ejemplo 3: Abrir el link en otra pestaña
    qué es href?
 es un atributo de HTML que significa Hypertext Reference (Referencia de Hipertexto). Se utiliza principalmente dentro de la etiqueta de anclaje <a> para definir el destino de un enlace o hipervínculo, indicando al navegador la URL o archivo al que debe dirigirse al hacer clic.
 ```
@@ -185,14 +185,14 @@ Crear una página con un enlace a otra.
 </body>
 </html>
 ```
-### Ejercicio 2.2: Navegación ida y vuelta
+### Navegación ida y vuelta
 Objetivo: entender la lógica de navegación (como sistema).
 
 ##### Modificar pagina2.html:
 ```
 <a href="index.html">Volver al inicio</a>
 ```
-### Ejercicio 2.3: Mini sitio (3 páginas conectadas)
+### Ejercicio: Mini sitio (3 páginas conectadas)
 Objetivo: pensar en estructura + narrativa.
 
 #### Crear 3 páginas:
@@ -226,7 +226,7 @@ obra.html
 <a href="index.html">Inicio</a><br>
 <a href="obra.html">Obra</a>
 ```
-### Ejercicio 2.4 insertar imágenes en cada página.
+### Ejercicio insertar imágenes en cada página.
 
 ##### Sintaxis básica:
 ```
