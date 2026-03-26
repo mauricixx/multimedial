@@ -452,30 +452,31 @@ Tiene mayor tamaño que el texto normal
 Genera un salto de línea antes y después (es un elemento de bloque)
 
 #### Ejemplo:
+
 ```html
 <h2>Capítulo 1</h2>
 ```
-#### <p> — Párrafo
-Definición técnica:
-<p> es una etiqueta HTML que define un párrafo de texto.
+#### <p>: Párrafo
+Definición técnica: <p> es una etiqueta HTML que define un párrafo de texto.
 
-Qué significa técnicamente:
+##### Qué significa técnicamente:
 Es un elemento de tipo bloque
 Agrupa contenido textual en una unidad semántica de lectura
 Se usa para contenido narrativo o descriptivo
 
-Comportamiento por defecto:
+##### Comportamiento por defecto:
 Agrega espacio arriba y abajo (margen)
 El texto fluye en líneas automáticamente
 Se adapta al ancho del contenedor
 
-Ejemplo:
+##### Ejemplo:
 ```html
 <p>Este es un párrafo de texto.</p>
 ```
-*** Esto le dice al navegador: “Esto es contenido textual continuo”
+Esto le dice al navegador: Esto es contenido textual continuo.
 
 ##### Diferencia técnica clave:
+
 ```
 --------------------------------------------------------
 |  Elemento  | Tipo     |  Función                      |
@@ -487,6 +488,7 @@ Ejemplo:
 ```
 
 #### Cómo trabajan juntos:
+
 ```html
 <h2>El cuerpo y la máquina</h2>
 <p>
@@ -494,7 +496,7 @@ Este proyecto explora la relación entre sistemas biológicos
 y procesos computacionales.
 </p>
 ```
-* Interpretación:
+##### Interpretación:
   
 ```
 <h2> → introduce una idea
