@@ -4,6 +4,11 @@
 
 #### Cultura web y arte digital.
 
+## Índice:
+1. [Semana 1](#semana-1) <br>
+2. [Semana 2](#semana-2-enlaces-links) <br>
+3. [Semana 3](#semana-3-mini-sitio-3-páginas-conectadas) <br>
+
 ### Semana 1:
 ``` 
 <!DOCTYPE html>
@@ -466,6 +471,7 @@ Ejemplo:
 “Esto es contenido textual continuo”
 
 ##### Diferencia técnica clave:
+```
 --------------------------------------------------------
 |  Elemento  | Tipo     |  Función                      |
 --------------------------------------------------------
@@ -473,6 +479,7 @@ Ejemplo:
 --------------------------------------------------------
 |  <p>       | Texto    |  Define contenido narrativo   |
 --------------------------------------------------------
+```
 
 #### Cómo trabajan juntos:
 ```
@@ -483,16 +490,16 @@ y procesos computacionales.
 </p>
 ```
 * Interpretación:
-- <h2> → introduce una idea
-- <p> → la desarrolla
+<h2> → introduce una idea
+<p> → la desarrolla
 
 ####  .contenedor
 
 Qué es técnicamente:
 
 .contenedor es una clase de CSS.
-- El punto . indica que es una clase
-- Se aplica a uno o más elementos HTML
+El punto . indica que es una clase
+Se aplica a uno o más elementos HTML
   ```
    .contenedor {
     width: 80%;
@@ -513,10 +520,10 @@ Centra el contenedor horizontalmente
 Interpretación conceptual
 
 El .contenedor es como:
-- un marco
-- una caja principal
-- una estructura base que organiza todo
-* Contiene todos los bloques internos
+un marco
+una caja principal
+una estructura base que organiza todo
+Contiene todos los bloques internos
 
 #### .bloque
 
@@ -532,10 +539,10 @@ También es una clase de CSS, pero pensada para repetirse.
 }
 ```
 #### Qué hace cada propiedad:
-- background-color: white: Fondo blanco
-- margin: 20px 0: Espacio arriba y abajo entre bloques
-- padding: 20px: Espacio interno entre el contenido y el borde
-- border-radius: 10px: Bordes redondeados
+background-color: white: Fondo blanco
+margin: 20px 0: Espacio arriba y abajo entre bloques
+padding: 20px: Espacio interno entre el contenido y el borde
+border-radius: 10px: Bordes redondeados
 
 ##### Cómo se usa en HTML:
 ```
@@ -552,6 +559,7 @@ También es una clase de CSS, pero pensada para repetirse.
 </div>
 ```
 #### Diferencia Clave:
+```
 --------------------------------------------------------
 |   Clase         |   Función                           |
 --------------------------------------------------------
@@ -559,14 +567,15 @@ También es una clase de CSS, pero pensada para repetirse.
 --------------------------------------------------------
 |   .bloque       |   Define cada pieza de contenido    |
 --------------------------------------------------------
+```
 
-*** 
-- .contenedor → el lienzo
-- .bloque → las composiciones
+ 
+##### .contenedor → el lienzo
+##### .bloque → las composiciones
 
 #### Punto técnico importante
-- Una clase (.bloque) se puede usar muchas veces
-- Un div puede tener varias clases:
+Una clase (.bloque) se puede usar muchas veces
+Un div puede tener varias clases:
 
 ### * Ejercicio 1:
 1.	Cambiar imágenes por fotos propias
