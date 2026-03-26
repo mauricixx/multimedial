@@ -439,17 +439,17 @@ Es una estructura modular: puedes copiar y pegar bloques para construir una pág
 ```
   
 #### Qué significa técnicamente:
-- Forma parte de la estructura semántica del documento
-- Indica jerarquía de información
-- Es interpretado por:
-- Navegadores
-- Motores de búsqueda (SEO)
-- Lectores de pantalla (accesibilidad)
+Forma parte de la estructura semántica del documento
+Indica jerarquía de información
+Es interpretado por:
+Navegadores
+Motores de búsqueda (SEO)
+Lectores de pantalla (accesibilidad)
 
 #### Comportamiento por defecto:
-- Se muestra en negrita
-- Tiene mayor tamaño que el texto normal
-- Genera un salto de línea antes y después (es un elemento de bloque)
+Se muestra en negrita
+Tiene mayor tamaño que el texto normal
+Genera un salto de línea antes y después (es un elemento de bloque)
 
 #### Ejemplo:
 ```html
@@ -460,21 +460,20 @@ Definición técnica:
 <p> es una etiqueta HTML que define un párrafo de texto.
 
 Qué significa técnicamente:
-- Es un elemento de tipo bloque
-- Agrupa contenido textual en una unidad semántica de lectura
-- Se usa para contenido narrativo o descriptivo
+Es un elemento de tipo bloque
+Agrupa contenido textual en una unidad semántica de lectura
+Se usa para contenido narrativo o descriptivo
 
 Comportamiento por defecto:
-- Agrega espacio arriba y abajo (margen)
-- El texto fluye en líneas automáticamente
-- Se adapta al ancho del contenedor
+Agrega espacio arriba y abajo (margen)
+El texto fluye en líneas automáticamente
+Se adapta al ancho del contenedor
 
 Ejemplo:
 ```html
 <p>Este es un párrafo de texto.</p>
 ```
-*** Esto le dice al navegador:
-“Esto es contenido textual continuo”
+*** Esto le dice al navegador: “Esto es contenido textual continuo”
 
 ##### Diferencia técnica clave:
 ```
@@ -496,8 +495,11 @@ y procesos computacionales.
 </p>
 ```
 * Interpretación:
+  
+```
 <h2> → introduce una idea
 <p> → la desarrolla
+```
 
 ####  .contenedor
 
@@ -512,17 +514,14 @@ Se aplica a uno o más elementos HTML
     margin: auto;
   ```
 ##### Qué hace cada propiedad:
-- width: 80%;
-El contenedor ocupa el 80% del ancho de la pantalla
-- margin: auto;
-Centra el contenedor horizontalmente
+width: 80%; El contenedor ocupa el 80% del ancho de la pantalla
+margin: auto; Centra el contenedor horizontalmente
 
 ##### Cómo se usa en HTML:
 ```html
 <div class="contenedor">
 ```
-##### Esto significa:
-“Este div va a usar los estilos definidos en .contenedor”
+##### Esto significa: “Este div va a usar los estilos definidos en .contenedor”
 Interpretación conceptual
 
 El .contenedor es como:
