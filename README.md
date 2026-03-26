@@ -413,10 +413,11 @@ Esto transforma la imagen en un botón visual.
 *** Es una estructura modular: puedes copiar y pegar bloques para construir una página completa.
 
 #### Definiciones tecnicas:
-<h2> — Encabezado de nivel 2
-<h2> es una etiqueta HTML de tipo heading (encabezado) que define un título jerárquico dentro del documento.
-##### HTML tiene 6 niveles de encabezados:
 
+<h2> Encabezado de nivel 2
+<h2> es una etiqueta HTML de tipo heading (encabezado) que define un título jerárquico dentro del documento.
+
+##### HTML tiene 6 niveles de encabezados:
 ```
 <h1> → nivel más importante
 <h2>
