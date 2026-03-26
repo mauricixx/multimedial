@@ -4,7 +4,7 @@
 
 #### Cultura web y arte digital.
 
-### Ejercico 1, semana 1:
+### Semana 1:
 ``` 
 <!DOCTYPE html>
 <!-- Indica al navegador que este documento usa HTML5 -->
@@ -76,7 +76,7 @@ MULTIMEDIAL
 <!-- Fin del documento HTML -->
 ```
 
-### Ejercico 2, semana 2: Enlaces (links)
+### Semana 2: Enlaces (links)
 #### Ejemplo 1 básico:
 ```
 <a href="pagina2.html">Ir a la página 2</a>
@@ -154,7 +154,7 @@ es un atributo de HTML que significa Hypertext Reference (Referencia de Hipertex
 src → ruta de la imagen
 alt → texto alternativo (muy importante, describe la imagen)
 
-## Ejercicio 3, semana 3: Mini sitio (3 páginas conectadas)
+## Semana 3: Mini sitio (3 páginas conectadas)
 Objetivo: pensar en estructura + narrativa.
 
 #### Crear 3 páginas:
@@ -416,6 +416,7 @@ Esto transforma la imagen en un botón visual.
 <h2> — Encabezado de nivel 2
 <h2> es una etiqueta HTML de tipo heading (encabezado) que define un título jerárquico dentro del documento.
 ##### HTML tiene 6 niveles de encabezados:
+
 ```
 <h1> → nivel más importante
 <h2>
@@ -424,6 +425,7 @@ Esto transforma la imagen en un botón visual.
 <h5>
 <h6> → nivel menos importante
 ```
+  
 #### Qué significa técnicamente:
 - Forma parte de la estructura semántica del documento
 - Indica jerarquía de información
