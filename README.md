@@ -583,18 +583,18 @@ border-radius: 10px: Bordes redondeados
 Una clase (.bloque) se puede usar muchas veces
 Un div puede tener varias clases:
 
-### * Ejercicio 1:
+#### Ejercicio 1:
 1.	Cambiar imágenes por fotos propias
 2.	Escribir un relato corto en cada bloque
 3.	Modificar colores de fondo
 4.	Agregar un cuarto bloque
 5.	Probar cambiar el orden (texto arriba, imagen abajo)
 
-### * Ejercicio 2:
-- 1.	Cambien el color de .bloque
-- 2.	Aumenten el padding a 50px
-- 3.	Cambien el width del .contenedor a 60%
-- 4.	Agreguen otro .bloque
+#### Ejercicio 2:
+1.	Cambien el color de .bloque
+2.	Aumenten el padding a 50px
+3.	Cambien el width del .contenedor a 60%
+4.	Agreguen otro .bloque
 
 
 
