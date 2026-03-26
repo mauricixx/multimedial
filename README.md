@@ -81,7 +81,7 @@ MULTIMEDIAL
 ```
 <a href="pagina2.html">Ir a la página 2</a>
 ```
-### Explicación:
+#### Explicación:
 <a> → etiqueta de enlace.
 href → atributo que indica a qué página se va a enlazar.
 "pagina2.html" → archivo o dirección a la que se va.
