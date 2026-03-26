@@ -97,6 +97,7 @@ Ir a la página 2 → texto visible del enlace.
 
 ### Ejemplo 2 con dos páginas:
 ##### index.html
+
 ```html
 <!DOCTYPE html>
 <html>
@@ -114,6 +115,7 @@ Ir a la página 2 → texto visible del enlace.
 </html>
 ```
 ##### pagina2.html
+
 ```html
 <!DOCTYPE html>
 <html>
