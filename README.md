@@ -10,7 +10,7 @@
 3. [Semana 3](#semana-3-mini-sitio-3-páginas-conectadas) <br>
 
 ### Semana 1:
-``` 
+``` html
 <!DOCTYPE html>
 <!-- Indica al navegador que este documento usa HTML5 -->
 
@@ -83,7 +83,7 @@ MULTIMEDIAL
 
 ### Semana 2: Enlaces (links)
 #### Ejemplo 1 básico:
-```
+```html
 <a href="pagina2.html">Ir a la página 2</a>
 ```
 #### Explicación:
