@@ -324,6 +324,7 @@ Esto transforma la imagen en un botón visual.
 
 #### Estructura básica de html.
 ##### ejemplo: Estructura usando divisiones (div) pensada para trabajar con imágenes + texto (encabezados y párrafos).
+
 ```html
 <!DOCTYPE html>
 <html>
@@ -411,18 +412,21 @@ Esto transforma la imagen en un botón visual.
 </body>
 </html>
 ```
-- <div> → sirve para organizar contenido en bloques
-- .contenedor → agrupa todo
-- .bloque → cada unidad de contenido (imagen + texto)
-- <img> → imagen
-- <h2> → título
-- <p> → párrafo
-*** Es una estructura modular: puedes copiar y pegar bloques para construir una página completa.
+```
+<div> → sirve para organizar contenido en bloques
+.contenedor → agrupa todo
+.bloque → cada unidad de contenido (imagen + texto)
+<img> → imagen
+<h2> → título
+<p> → párrafo
+```
+Es una estructura modular: puedes copiar y pegar bloques para construir una página completa.
 
 #### Definiciones tecnicas:
-
+```
 <h2> Encabezado de nivel 2
 <h2> es una etiqueta HTML de tipo heading (encabezado) que define un título jerárquico dentro del documento.
+```
 
 ##### HTML tiene 6 niveles de encabezados:
 ```
