@@ -97,7 +97,7 @@ Ir a la página 2 → texto visible del enlace.
 
 ### Ejemplo 2 con dos páginas:
 ##### index.html
-```
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -114,7 +114,7 @@ Ir a la página 2 → texto visible del enlace.
 </html>
 ```
 ##### pagina2.html
-```
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -139,20 +139,20 @@ pagina2.html → vuelve a index.html
 ### Ejemplo 3: Abrir el link en otra pestaña
    qué es href?
 es un atributo de HTML que significa Hypertext Reference (Referencia de Hipertexto). Se utiliza principalmente dentro de la etiqueta de anclaje <a> para definir el destino de un enlace o hipervínculo, indicando al navegador la URL o archivo al que debe dirigirse al hacer clic.
-```
+```html
 <a href="https://www.wikipedia.org" target="_blank">Ir a Wikipedia</a>
 ```
 ##### target="_blank" significa que el enlace se abre en una nueva pestaña.
 
 ##### Concepto clave para recordar.
 ##### HTML usa esta estructura:
-```
+```html
 <a href="direccion">texto del enlace</a>
 ```
 ### Ejercicio extra: insertar imagenes en una página.
 
 ##### Sintaxis básica:
-```
+```html
 <img src="imagen.jpg" alt="descripción">
 ```
 ##### Explicación:
@@ -168,14 +168,14 @@ obra.html
 contacto.html
 
 ##### index.html:
-```
+```html
 <h1>Mi sitio</h1>
 
 <a href="obra.html">Obra</a><br>
 <a href="contacto.html">Contacto</a>
 ```
 obra.html
-```
+```html
 <h1>Mi obra</h1>
 
 <p>Descripción de mi trabajo artístico</p>
@@ -185,7 +185,7 @@ obra.html
 ```
 
 ##### contacto.html:
-```
+```html
 <h1>Contacto</h1>
 
 <p>email@email.com</p>
@@ -204,7 +204,7 @@ inicio.jpg
 
 ##### Ejemplo:
 ##### index.html:
-```
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -226,7 +226,7 @@ inicio.jpg
 </html>
 ```
 ##### obra.html:
-```
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -248,7 +248,7 @@ inicio.jpg
 </html>
 ```
 ##### contacto.html:
-```
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -277,7 +277,7 @@ X Obra.jpg ≠ obra.jpg
 Siempre usar alt (accesibilidad + buenas prácticas)
 
 ##### Bonus: Hacer la imagen clickeable (como link)
-  ```
+  ```html
 <a href="obra.html">
   <img src="inicio.jpg" alt="Ir a obra" width="300">
 </a>
@@ -285,7 +285,7 @@ Siempre usar alt (accesibilidad + buenas prácticas)
 Esto transforma la imagen en un botón visual.
 
 #### Modelo a seguir con explicación línea por línea:
-```
+```html
 <!DOCTYPE html> <!-- Indica al navegador que este documento usa HTML5 -->
 
 <html> <!-- Inicio del documento HTML -->
@@ -322,7 +322,7 @@ Esto transforma la imagen en un botón visual.
 
 #### Estructura básica de html.
 ##### ejemplo: Estructura usando divisiones (div) pensada para trabajar con imágenes + texto (encabezados y párrafos).
-```
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -446,7 +446,7 @@ Esto transforma la imagen en un botón visual.
 - Genera un salto de línea antes y después (es un elemento de bloque)
 
 #### Ejemplo:
-```
+```html
 <h2>Capítulo 1</h2>
 ```
 #### <p> — Párrafo
@@ -464,7 +464,7 @@ Comportamiento por defecto:
 - Se adapta al ancho del contenedor
 
 Ejemplo:
-```
+```html
 <p>Este es un párrafo de texto.</p>
 ```
 *** Esto le dice al navegador:
@@ -482,7 +482,7 @@ Ejemplo:
 ```
 
 #### Cómo trabajan juntos:
-```
+```html
 <h2>El cuerpo y la máquina</h2>
 <p>
 Este proyecto explora la relación entre sistemas biológicos
@@ -500,7 +500,7 @@ Qué es técnicamente:
 .contenedor es una clase de CSS.
 El punto . indica que es una clase
 Se aplica a uno o más elementos HTML
-  ```
+  ```html
    .contenedor {
     width: 80%;
     margin: auto;
@@ -512,7 +512,7 @@ El contenedor ocupa el 80% del ancho de la pantalla
 Centra el contenedor horizontalmente
 
 ##### Cómo se usa en HTML:
-```
+```html
 <div class="contenedor">
 ```
 ##### Esto significa:
@@ -530,7 +530,7 @@ Contiene todos los bloques internos
 Qué es técnicamente:
 
 También es una clase de CSS, pero pensada para repetirse.
-```
+```html
 .bloque {
     background-color: white;
     margin: 20px 0;
@@ -545,7 +545,7 @@ padding: 20px: Espacio interno entre el contenido y el borde
 border-radius: 10px: Bordes redondeados
 
 ##### Cómo se usa en HTML:
-```
+```html
 <div class="contenedor">
 
     <div class="bloque">
