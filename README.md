@@ -77,7 +77,7 @@ MULTIMEDIAL
 ```
 
 ## Ejercico 2, semana 2: Enlaces (links)
-1. Ejemplo básico:
+### Ejemplo 1 básico:
 ```
 <a href="pagina2.html">Ir a la página 2</a>
 ```
@@ -90,7 +90,7 @@ Ir a la página 2 → texto visible del enlace.
 
 #### Cuando una persona hace clic en “Ir a la página 2”, el navegador abre pagina2.html.
 
-### 2 Ejemplo con dos páginas:
+### Ejemplo 2 con dos páginas:
 ##### index.html
 ```
 <!DOCTYPE html>
@@ -144,54 +144,16 @@ es un atributo de HTML que significa Hypertext Reference (Referencia de Hipertex
 ```
 <a href="direccion">texto del enlace</a>
 ```
+### Ejercicio insertar imagenes en una página.
 
-### Ejercicio 2.1: Primer enlace
-
-Objetivo: entender cómo funciona un link básico.
-
-Instrucción:
-
-Crear una página con un enlace a otra.
-
-##### archivo: index.html
+##### Sintaxis básica:
 ```
-<!DOCTYPE html>
-<html>
-<head>
-<title>Inicio</title>
-</head>
-
-<body>
-
-<h1>Hola</h1>
-
-<a href="pagina2.html">Ir a otra página</a>
-
-</body>
-</html>
+<img src="imagen.jpg" alt="descripción">
 ```
-##### archivo: pagina2.html
-```
-<!DOCTYPE html>
-<html>
-<head>
-<title>Página 2</title>
-</head>
+##### Explicación:
+src → ruta de la imagen
+alt → texto alternativo (muy importante, describe la imagen)
 
-<body>
-
-<h1>Llegaste a la página 2</h1>
-
-</body>
-</html>
-```
-### Navegación ida y vuelta
-Objetivo: entender la lógica de navegación (como sistema).
-
-##### Modificar pagina2.html:
-```
-<a href="index.html">Volver al inicio</a>
-```
 ### Ejercicio: Mini sitio (3 páginas conectadas)
 Objetivo: pensar en estructura + narrativa.
 
@@ -226,18 +188,11 @@ obra.html
 <a href="index.html">Inicio</a><br>
 <a href="obra.html">Obra</a>
 ```
+
 ### Ejercicio insertar imágenes en cada página.
 
-##### Sintaxis básica:
-```
-<img src="imagen.jpg" alt="descripción">
-```
-##### Explicación:
-src → ruta de la imagen
-alt → texto alternativo (muy importante, describe la imagen)
 
-##### Ejercicio: insertar imágenes en cada página:
-  Supongamos que tienes estas imágenes en la misma carpeta:
+##### Supongamos que tienes estas imágenes en la misma carpeta:
 obra.jpg
 contacto.jpg
 inicio.jpg
@@ -324,7 +279,7 @@ Siempre usar alt (accesibilidad + buenas prácticas)
 ```
 Esto transforma la imagen en un botón visual.
 
-Modelo a seguir con explicación línea por línea:
+#### Modelo a seguir con explicación línea por línea:
 ```
 <!DOCTYPE html> <!-- Indica al navegador que este documento usa HTML5 -->
 
