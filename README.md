@@ -144,7 +144,7 @@ es un atributo de HTML que significa Hypertext Reference (Referencia de Hipertex
 ```
 <a href="direccion">texto del enlace</a>
 ```
-### Ejercicio insertar imagenes en una página.
+### Ejercicio extra: insertar imagenes en una página.
 
 ##### Sintaxis básica:
 ```
@@ -154,7 +154,7 @@ es un atributo de HTML que significa Hypertext Reference (Referencia de Hipertex
 src → ruta de la imagen
 alt → texto alternativo (muy importante, describe la imagen)
 
-### Ejercicio: Mini sitio (3 páginas conectadas)
+### Ejercicio 3, semana 3: Mini sitio (3 páginas conectadas)
 Objetivo: pensar en estructura + narrativa.
 
 #### Crear 3 páginas:
@@ -314,6 +314,273 @@ Esto transforma la imagen en un botón visual.
 
 </html> <!-- Fin del documento HTML -->
 ```
+
+#### Estructura básica de html.
+##### ejemplo: Estructura usando divisiones (div) pensada para trabajar con imágenes + texto (encabezados y párrafos).
+```
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Estructura con Divisiones</title>
+
+    <style>
+        /* Estilo general del cuerpo */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+
+        /* Contenedor principal */
+        .contenedor {
+            width: 80%;
+            margin: auto;
+        }
+
+        /* Sección o bloque */
+        .bloque {
+            background-color: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        /* Imagen */
+        .bloque img {
+            width: 100%;
+            height: auto;
+        }
+
+        /* Encabezado */
+        .bloque h2 {
+            margin-top: 10px;
+        }
+
+        /* Texto */
+        .bloque p {
+            line-height: 1.5;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Contenedor principal -->
+    <div class="contenedor">
+
+        <!-- BLOQUE 1 -->
+        <div class="bloque">
+            <img src="imagen1.jpg" alt="Descripción de la imagen">
+            <h2>Título 1</h2>
+            <p>
+                Este es un texto de ejemplo. Aquí puedes escribir contenido descriptivo,
+                reflexivo o informativo sobre la imagen.
+            </p>
+        </div>
+
+        <!-- BLOQUE 2 -->
+        <div class="bloque">
+            <img src="imagen2.jpg" alt="Descripción de la imagen">
+            <h2>Título 2</h2>
+            <p>
+                Otro texto que acompaña la imagen. Puedes trabajar narrativa,
+                análisis visual o cualquier tipo de contenido.
+            </p>
+        </div>
+
+        <!-- BLOQUE 3 -->
+        <div class="bloque">
+            <img src="imagen3.jpg" alt="Descripción de la imagen">
+            <h2>Título 3</h2>
+            <p>
+                Este es un tercer bloque. Puedes repetir esta estructura
+                tantas veces como quieras.
+            </p>
+        </div>
+
+    </div>
+
+</body>
+</html>
+```
+- <div> → sirve para organizar contenido en bloques
+- .contenedor → agrupa todo
+- .bloque → cada unidad de contenido (imagen + texto)
+- <img> → imagen
+- <h2> → título
+- <p> → párrafo
+*** Es una estructura modular: puedes copiar y pegar bloques para construir una página completa.
+
+#### Definiciones tecnicas:
+<h2> — Encabezado de nivel 2
+<h2> es una etiqueta HTML de tipo heading (encabezado) que define un título jerárquico dentro del documento.
+##### HTML tiene 6 niveles de encabezados:
+```
+<h1> → nivel más importante
+<h2>
+<h3>
+<h4>
+<h5>
+<h6> → nivel menos importante
+```
+#### Qué significa técnicamente:
+- Forma parte de la estructura semántica del documento
+- Indica jerarquía de información
+- Es interpretado por:
+- Navegadores
+- Motores de búsqueda (SEO)
+- Lectores de pantalla (accesibilidad)
+
+#### Comportamiento por defecto:
+- Se muestra en negrita
+- Tiene mayor tamaño que el texto normal
+- Genera un salto de línea antes y después (es un elemento de bloque)
+
+#### Ejemplo:
+```
+<h2>Capítulo 1</h2>
+```
+#### <p> — Párrafo
+Definición técnica:
+<p> es una etiqueta HTML que define un párrafo de texto.
+
+Qué significa técnicamente:
+- Es un elemento de tipo bloque
+- Agrupa contenido textual en una unidad semántica de lectura
+- Se usa para contenido narrativo o descriptivo
+
+Comportamiento por defecto:
+- Agrega espacio arriba y abajo (margen)
+- El texto fluye en líneas automáticamente
+- Se adapta al ancho del contenedor
+
+Ejemplo:
+```
+<p>Este es un párrafo de texto.</p>
+```
+*** Esto le dice al navegador:
+“Esto es contenido textual continuo”
+
+##### Diferencia técnica clave:
+--------------------------------------------------------
+|  Elemento  | Tipo     |  Función                      |
+--------------------------------------------------------
+|  <h2>      | Heading  |  Define estructura jerárquica |
+--------------------------------------------------------
+|  <p>       | Texto    |  Define contenido narrativo   |
+--------------------------------------------------------
+
+#### Cómo trabajan juntos:
+```
+<h2>El cuerpo y la máquina</h2>
+<p>
+Este proyecto explora la relación entre sistemas biológicos
+y procesos computacionales.
+</p>
+```
+* Interpretación:
+- <h2> → introduce una idea
+- <p> → la desarrolla
+
+####  .contenedor
+
+Qué es técnicamente:
+
+.contenedor es una clase de CSS.
+- El punto . indica que es una clase
+- Se aplica a uno o más elementos HTML
+  ```
+   .contenedor {
+    width: 80%;
+    margin: auto;
+  ```
+##### Qué hace cada propiedad:
+- width: 80%;
+El contenedor ocupa el 80% del ancho de la pantalla
+- margin: auto;
+Centra el contenedor horizontalmente
+
+##### Cómo se usa en HTML:
+```
+<div class="contenedor">
+```
+##### Esto significa:
+“Este div va a usar los estilos definidos en .contenedor”
+Interpretación conceptual
+
+El .contenedor es como:
+- un marco
+- una caja principal
+- una estructura base que organiza todo
+* Contiene todos los bloques internos
+
+#### .bloque
+
+Qué es técnicamente:
+
+También es una clase de CSS, pero pensada para repetirse.
+```
+.bloque {
+    background-color: white;
+    margin: 20px 0;
+    padding: 20px;
+    border-radius: 10px;
+}
+```
+#### Qué hace cada propiedad:
+- background-color: white: Fondo blanco
+- margin: 20px 0: Espacio arriba y abajo entre bloques
+- padding: 20px: Espacio interno entre el contenido y el borde
+- border-radius: 10px: Bordes redondeados
+
+##### Cómo se usa en HTML:
+```
+<div class="contenedor">
+
+    <div class="bloque">
+        <!-- contenido -->
+    </div>
+
+    <div class="bloque">
+        <!-- contenido -->
+    </div>
+
+</div>
+```
+#### Diferencia Clave:
+--------------------------------------------------------
+|   Clase         |   Función                           |
+--------------------------------------------------------
+|   .contenedor   |   Organiza el espacio general       |
+--------------------------------------------------------
+|   .bloque       |   Define cada pieza de contenido    |
+--------------------------------------------------------
+
+*** 
+- .contenedor → el lienzo
+- .bloque → las composiciones
+
+#### Punto técnico importante
+- Una clase (.bloque) se puede usar muchas veces
+- Un div puede tener varias clases:
+
+### * Ejercicio 1:
+1.	Cambiar imágenes por fotos propias
+2.	Escribir un relato corto en cada bloque
+3.	Modificar colores de fondo
+4.	Agregar un cuarto bloque
+5.	Probar cambiar el orden (texto arriba, imagen abajo)
+
+### * Ejercicio 2:
+- 1.	Cambien el color de .bloque
+- 2.	Aumenten el padding a 50px
+- 3.	Cambien el width del .contenedor a 60%
+- 4.	Agreguen otro .bloque
+
+
+
+
 
 
 
