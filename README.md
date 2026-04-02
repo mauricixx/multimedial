@@ -710,7 +710,7 @@ img { /* Aplica a todas las imágenes */
 }
 </style>
 
-<img src="https://via.placeholder.com/400" /> <!-- Imagen de ejemplo -->
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Wikipedia-logo-v2.svg/960px-Wikipedia-logo-v2.svg.png" /> <!-- Imagen de ejemplo -->
 ```
 
 
