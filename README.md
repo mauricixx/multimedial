@@ -597,6 +597,123 @@ Un div puede tener varias clases:
 3.	Cambien el width del .contenedor a 60%
 4.	Agreguen otro .bloque
 
+### Semana 4. CSS Intermedio (Interacción y Layout)
+#### Objetivo general
+- Introducir hover (interacción)
+- Entender flexbox (alineación)
+- Controlar imágenes y proporciones
+- Empezar a pensar en diseño más dinámico
+
+#### Ejercicio 1: Efecto Hover (interacción)
+##### Objetivo: Que los elementos reaccionen al mouse
+
+##### Instrucciones:
+- Crear un botón o bloque
+- Cambiar su color cuando el mouse pasa encima
+- Agregar una transición suave
+
+##### Código base:
+```html
+<style>
+.boton { /* Define una clase llamada "boton" */
+  background-color: blue; /* Color de fondo del botón */
+  color: white; /* Color del texto */
+  padding: 15px; /* Espacio interno (arriba, abajo, izquierda, derecha) */
+  width: 150px; /* Ancho fijo del botón */
+  text-align: center; /* Centra el texto horizontalmente */
+  transition: 0.3s; /* Hace que los cambios (como color) sean suaves en 0.3 segundos */
+}
+
+.boton:hover { /* Se activa cuando el mouse pasa sobre el elemento */
+  background-color: red; /* Cambia el color de fondo al pasar el mouse */
+}
+</style>
+
+<div class="boton">Pasa el mouse</div> <!-- Elemento que usa la clase "boton" -->
+```
+
+#### Ejercicio 2: Flexbox (alineación horizontal)
+
+#### Objetivo: Ordenar elementos en fila
+
+#### Instrucciones:
+- Crear 3 bloques
+- Alinearlos horizontalmente
+- Separarlos de forma uniforme
+
+##### Código base:
+```html
+<style>
+.contenedor { /* Clase contenedora */
+  display: flex; /* Activa flexbox: organiza los hijos en fila */
+  justify-content: space-around; /* Distribuye los elementos con espacio alrededor */
+}
+
+.caja { /* Clase para cada bloque */
+  background-color: lightgreen; /* Color de fondo */
+  padding: 20px; /* Espacio interno */
+}
+</style>
+
+<div class="contenedor"> <!-- Contenedor flex -->
+  <div class="caja">1</div> <!-- Primer bloque -->
+  <div class="caja">2</div> <!-- Segundo bloque -->
+  <div class="caja">3</div> <!-- Tercer bloque -->
+</div>
+```
+
+#### Ejercicio 3: Flexbox (centrado total)
+
+#### Objetivo: Centrar elementos en pantalla (muy útil)
+
+##### Instrucciones:
+- Centrar un elemento en el medio exacto de la pantalla (horizontal y vertical)
+
+##### Código base:
+```html
+<style>
+body { /* Aplica estilos al cuerpo completo de la página */
+  display: flex; /* Activa flexbox */
+  justify-content: center; /* Centra horizontalmente */
+  align-items: center; /* Centra verticalmente */
+  height: 100vh; /* Altura total de la pantalla (viewport height) */
+}
+
+.caja { /* Elemento que será centrado */
+  background-color: black; /* Fondo negro */
+  color: white; /* Texto blanco */
+  padding: 30px; /* Espacio interno */
+}
+</style>
+
+<div class="caja">Centro</div> <!-- Elemento centrado en pantalla -->
+```
+#### Ejercicio 4: Imágenes controladas
+
+#### Objetivo: Manejar imágenes correctamente
+
+#### Instrucciones:
+- Insertar una imagen
+- Ajustarla para que no se deforme
+- Agregar borde y estilo
+
+##### Código base:
+```html
+<style>
+img { /* Aplica a todas las imágenes */
+  width: 300px; /* Ancho fijo */
+  height: 200px; /* Alto fijo */
+  object-fit: cover; /* Ajusta la imagen sin deformarla (recorta si es necesario) */
+  border: 5px solid black; /* Borde negro de 5px */
+}
+</style>
+
+<img src="https://via.placeholder.com/400" /> <!-- Imagen de ejemplo -->
+```
+
+
+
+
 
 
 
