@@ -712,7 +712,19 @@ img { /* Aplica a todas las imágenes */
 
 <img src="https://upload.wikimedia.org/wikipedia/commons/8/80/Wikipedia-logo-v2.svg" /> <!-- Imagen de ejemplo -->
 ```
+### Ejercicio 5 (clave en tu línea): Composición con flex
 
+#### Objetivo: Crear una composición visual tipo obra
+
+##### Instrucciones:
+- Crear una grilla simple usando flex
+- Combinar distintos tamaños de bloques
+- Usar colores como lenguaje visual
+
+Idea:
+- 1 bloque grande
+- 2 medianos
+- 3 pequeños
 
 
 
