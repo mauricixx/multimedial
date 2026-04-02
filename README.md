@@ -10,7 +10,7 @@
 3. [Semana 3](#semana-3-mini-sitio-3-páginas-conectadas) <br>
 4. [Semana 4](#semana-4-css-intermedio-interacción-y-layout) <br>
 
-### Semana 1:
+## Semana 1:
 ``` html
 <!DOCTYPE html>
 <!-- Indica al navegador que este documento usa HTML5 -->
@@ -82,7 +82,7 @@ MULTIMEDIAL
 <!-- Fin del documento HTML -->
 ```
 
-### Semana 2: Enlaces (links)
+## Semana 2: Enlaces (links)
 #### Ejemplo 1 básico:
 ```html
 <a href="pagina2.html">Ir a la página 2</a>
@@ -598,7 +598,8 @@ Un div puede tener varias clases:
 3.	Cambien el width del .contenedor a 60%
 4.	Agreguen otro .bloque
 
-### Semana 4. CSS Intermedio (Interacción y Layout)
+
+## Semana 4. CSS Intermedio (Interacción y Layout)
 #### Objetivo general
 - Introducir hover (interacción)
 - Entender flexbox (alineación)
