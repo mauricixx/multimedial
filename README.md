@@ -726,6 +726,170 @@ Idea:
 - 2 medianos
 - 3 pequeños
 
+#### Barra de navegación HORIZONTAL.
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Navbar Horizontal</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+.navbar {
+  background-color: #333;
+  overflow: hidden;
+}
+
+.navbar a {
+  float: left;
+  color: white;
+  text-align: center;
+  padding: 14px 20px;
+  text-decoration: none;
+}
+
+.navbar a:hover {
+  background-color: red;
+}
+</style>
+</head>
+
+<body>
+
+<div class="navbar">
+  <a href="#">Inicio</a>
+  <a href="#">Proyectos</a>
+  <a href="#">Contacto</a>
+</div>
+
+</body>
+</html>
+```
+
+#### Barra de navegación VERTICAL.
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Navbar Vertical</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+.sidebar {
+  width: 200px;
+  height: 100vh;
+  background-color: #333;
+}
+
+.sidebar a {
+  display: block;
+  color: white;
+  padding: 15px;
+  text-decoration: none;
+}
+
+.sidebar a:hover {
+  background-color: red;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <a href="#">Inicio</a>
+  <a href="#">Proyectos</a>
+  <a href="#">Contacto</a>
+</div>
+
+</body>
+</html>
+```
+
+##### Versión moderna (recomendada): usando FLEXBOX
+```css
+.navbar {
+  display: flex;
+  background-color: #333;
+}
+```
+##### Vertical con Flex:
+```css
+.sidebar {
+  display: flex;
+  flex-direction: column;
+}
+```
+
+#### 1. Centrar texto horizontalmente
+```html
+<div style="text-align: center;">
+  Este texto está centrado horizontalmente
+</div>
+```
+
+#### 2. Centrar texto vertical y horizontalmente (flexbox)
+```html
+<div style="
+  display: flex;
+  justify-content: center; 
+  align-items: center; 
+  height: 200px;
+  border: 1px solid black;
+">
+  Texto completamente centrado
+</div>
+```
+##### Explicación rápida:
+- display: flex → activa flexbox
+- justify-content: center → centra horizontal
+- align-items: center → centra vertical
+- height → necesario para ver el centrado vertical
+
+#### 3. Centrar con grid (otra opción moderna).
+```html
+<div style="
+  display: grid;
+  place-items: center;
+  height: 200px;
+  border: 1px solid black;
+">
+  Texto centrado con grid
+</div>
+```
+#### 4. Centrar usando position (más clásico).
+```html
+<div style="position: relative; height: 200px; border: 1px solid black;">
+  <p style="
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  ">
+    Texto centrado absoluto
+  </p>
+</div>
+```
+
+
+
+
+
+
+
+
+
+
 
 
 
