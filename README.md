@@ -631,7 +631,7 @@ Un div puede tener varias clases:
 }
 </style>
 
-<div class="boton">Pasa el mouse</div> <!-- Elemento que usa la clase "boton" -->
+<a href="https://google.com" class="boton">Ir a Google</a>
 ```
 
 #### Ejercicio 2: Flexbox (alineación horizontal)
