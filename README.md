@@ -712,7 +712,7 @@ img { /* Aplica a todas las imágenes */
 
 <img src="https://upload.wikimedia.org/wikipedia/commons/8/80/Wikipedia-logo-v2.svg" /> <!-- Imagen de ejemplo -->
 ```
-### Ejercicio 5 (clave en tu línea): Composición con flex
+### Ejercicio 5: Composición con flex
 
 #### Objetivo: Crear una composición visual tipo obra
 
