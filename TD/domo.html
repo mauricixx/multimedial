@@ -41,38 +41,7 @@
     margin:-3px 0 0 -3px; border-radius:50%;
     border:1px solid rgba(95,247,224,.65); z-index:5; pointer-events:none;
     box-shadow:0 0 6px rgba(95,247,224,.4);
-    display:none;
-  }
-
-  #intro{
-    position:fixed; inset:0; z-index:20; background:var(--ink);
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    text-align:center; padding:32px; box-sizing:border-box;
-    background:
-      radial-gradient(circle at 50% 40%, rgba(95,247,224,.08), transparent 60%),
-      var(--ink);
-  }
-  #intro .eyebrow{
-    color:var(--magenta); font-size:11px; letter-spacing:.3em; text-transform:uppercase;
-    margin-bottom:14px;
-  }
-  #intro h1{
-    color:var(--paper); font-size:clamp(22px,6vw,34px); font-weight:400;
-    letter-spacing:.02em; margin:0 0 10px 0; line-height:1.25;
-  }
-  #intro h1 em{ color:var(--cyan); font-style:normal; }
-  #intro p{
-    color:#8a9aa0; font-size:13px; line-height:1.7; max-width:420px; margin:0 0 28px 0;
-  }
-  #enterBtn{
-    background:transparent; border:1px solid var(--cyan); color:var(--cyan);
-    padding:13px 30px; font-size:12px; letter-spacing:.2em; text-transform:uppercase;
-    font-family:inherit; cursor:pointer; border-radius:2px;
-    transition:background .2s, color .2s;
-  }
-  #enterBtn:active{ background:var(--cyan); color:#04100e; }
-  #intro .hint{
-    margin-top:18px; color:#4a565a; font-size:10px; letter-spacing:.1em;
+    display:block;
   }
 
   #joyMove, #joyLook{
@@ -108,20 +77,6 @@
 </head>
 <body>
 
-<div id="intro">
-  <div class="eyebrow">Investigación-creación · Metro de Santiago</div>
-  <h1>QUIMERAS: <em>Arte &amp; Patrimonio</em><br>Domo geodésico interactivo</h1>
-  <p>Una cúpula geodésica de 5 metros de altura, con piel blanca parcialmente
-     cubierta —dejando aberturas hacia el interior— cambia de color solo por
-     dentro. Adentro, una pantalla curva reúne tres secciones de una obra
-     interactiva concebida para la red del Metro de Santiago, y un panel
-     táctil central permite cambiar la variante de la Quimera exhibida. El
-     recorrido comienza afuera, de día, en la explanada de la estación:
-     puedes caminar alrededor del domo y entrar por su vano de acceso.</p>
-  <button id="enterBtn">Comenzar recorrido</button>
-  <div class="hint">Escritorio: arrastrar para mirar · WASD para moverse<br>Móvil: lado izquierdo mover · lado derecho mirar</div>
-</div>
-
 <div id="hud">
   <div class="brand">QUIMERAS<small>domo · sesión 01</small></div>
   <div class="coords" id="coordsOut">x 0.0 &nbsp; z 0.0</div>
@@ -142,8 +97,8 @@
    ESCENA BASE
 --------------------------------------------------------------------- */
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xa9cbe0);
-scene.fog = new THREE.FogExp2(0xc4dcea, 0.012);
+scene.background = new THREE.Color(0xf5f0eb); // Fondo blanco hueso
+scene.fog = new THREE.FogExp2(0xf5f0eb, 0.006);
 
 const camera = new THREE.PerspectiveCamera(62, window.innerWidth/window.innerHeight, 0.05, 140);
 const EYE_H = 1.62;
@@ -156,22 +111,18 @@ document.body.appendChild(renderer.domElement);
 
 /* ---------------------------------------------------------------------
    PARAMETROS DEL DOMO
-   Cupula "mas que hemisferica" (tipo 5/8 de esfera): la esfera generadora
-   se corta por debajo del ecuador, por lo que el domo se abomba mas alla
-   de su base antes de cerrarse en la cima -> altura real de 5 m.
 --------------------------------------------------------------------- */
-const SPHERE_R = 3.6;        // radio de la esfera generadora
-const CAP_BOTTOM_LOCAL = -1.4; // corte local (negativo = bajo el ecuador -> mas que hemisferio)
-const DETAIL = 3;            // frecuencia de subdivision geodesica (3V)
-const translateY = -CAP_BOTTOM_LOCAL;               // desplazamiento para que la base quede en y=0
-const DOME_HEIGHT = SPHERE_R - CAP_BOTTOM_LOCAL;    // = 5.0 m
-const baseRadius = Math.sqrt(SPHERE_R*SPHERE_R - CAP_BOTTOM_LOCAL*CAP_BOTTOM_LOCAL); // radio de la base
-const OUTER_R = SPHERE_R*2;  // radio de la explanada: el espacio total (2*OUTER_R) es el doble del diametro del domo (2*SPHERE_R)
+const SPHERE_R = 3.6;
+const CAP_BOTTOM_LOCAL = -1.4;
+const DETAIL = 3;
+const translateY = -CAP_BOTTOM_LOCAL;
+const DOME_HEIGHT = SPHERE_R - CAP_BOTTOM_LOCAL;
+const baseRadius = Math.sqrt(SPHERE_R*SPHERE_R - CAP_BOTTOM_LOCAL*CAP_BOTTOM_LOCAL);
+const OUTER_R = 10;
 
-// puerta de acceso: hueco angular en la estructura para entrar y salir
-const DOOR_AZIMUTH = Math.PI*1.5;   // orientacion de la puerta
-const DOOR_HALF_WIDTH = 0.30;       // ancho angular medio (rad)
-const DOOR_TOP_H = 3.4;             // altura del vano (mas alta)
+const DOOR_AZIMUTH = Math.PI*1.5;
+const DOOR_HALF_WIDTH = 0.30;
+const DOOR_TOP_H = 3.4;
 
 function domeRadiusAt(y){
   const localY = y - translateY;
@@ -189,170 +140,310 @@ function inDoorway(x,z,y){
   return angleDelta(az,DOOR_AZIMUTH) < DOOR_HALF_WIDTH && y < DOOR_TOP_H;
 }
 
-// arco que ocupa la pantalla curva interior (evitamos aberturas justo detras de ella)
 const SCREEN_AZ_START = Math.PI*0.12, SCREEN_AZ_END = Math.PI*0.98;
 const SCREEN_AZ_CENTER = (SCREEN_AZ_START+SCREEN_AZ_END)/2;
 const SCREEN_AZ_HALF = (SCREEN_AZ_END-SCREEN_AZ_START)/2 + 0.12;
 
 /* ---------------------------------------------------------------------
-   SUELO
+   ENTORNO INTERIOR: GALPÓN DE 20x20 - TODO BLANCO (excepto techo)
 --------------------------------------------------------------------- */
-function buildFloorTexture(){
-  const size = 1536;
-  const cv = document.createElement('canvas'); cv.width = cv.height = size;
-  const ctx = cv.getContext('2d');
-  ctx.fillStyle = '#050607'; ctx.fillRect(0,0,size,size);
+const ROOM_SIZE = 20;
+const ROOM_HALF = ROOM_SIZE/2;
+const ROOM_HEIGHT = 6.5;
 
-  const cx = size/2, cy = size/2;
-  const px = size/2;                                  // px por unidad de OUTER_R
-  const interiorPxR = px * (baseRadius/OUTER_R);       // radio interior del domo en pixeles
-
-  // pavimento de la explanada: base clara tipo concreto + juntas en grilla
-  ctx.save();
-  ctx.beginPath(); ctx.arc(cx,cy,px*0.995,0,Math.PI*2); ctx.clip();
-  ctx.fillStyle = '#9aa3a6'; ctx.fillRect(0,0,size,size);
-  const gGrad = ctx.createRadialGradient(cx,cy,interiorPxR,cx,cy,px);
-  gGrad.addColorStop(0,'rgba(120,128,131,0.9)'); gGrad.addColorStop(1,'rgba(150,158,160,0.55)');
-  ctx.fillStyle = gGrad; ctx.fillRect(0,0,size,size);
-  ctx.strokeStyle = 'rgba(60,66,68,0.35)'; ctx.lineWidth = 2;
-  const joint = 46;
-  for(let x=0;x<size;x+=joint){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,size); ctx.stroke(); }
-  for(let y=0;y<size;y+=joint){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(size,y); ctx.stroke(); }
-  ctx.restore();
-
-  // anillos guía sutiles alrededor del domo
-  ctx.strokeStyle = 'rgba(30,40,42,0.18)'; ctx.lineWidth = 1;
-  for(let r=interiorPxR+50; r<px; r+=70){ ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke(); }
-
-  // sendero de acceso alineado a la puerta (DOOR_AZIMUTH), dibujado en coordenadas (x,z)->(u,v)
-  const doorDX = Math.sin(DOOR_AZIMUTH), doorDZ = Math.cos(DOOR_AZIMUTH);
-  ctx.save();
-  ctx.strokeStyle = 'rgba(95,247,224,0.32)'; ctx.lineWidth = 46; ctx.lineCap='round';
-  ctx.beginPath();
-  ctx.moveTo(cx + doorDX*interiorPxR*0.9, cy + doorDZ*interiorPxR*0.9);
-  ctx.lineTo(cx + doorDX*px*0.98, cy + doorDZ*px*0.98);
-  ctx.stroke();
-  ctx.restore();
-
-  // circulo interior (huella del domo) con la red nodal
-  ctx.save();
-  ctx.beginPath(); ctx.arc(cx,cy,interiorPxR,0,Math.PI*2); ctx.clip();
-  ctx.fillStyle = '#07090a'; ctx.fillRect(cx-interiorPxR,cy-interiorPxR,interiorPxR*2,interiorPxR*2);
-  ctx.strokeStyle = 'rgba(95,247,224,0.08)'; ctx.lineWidth = 1;
-  for(let r=interiorPxR*0.18;r<interiorPxR;r+=interiorPxR*0.16){ ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke(); }
-
-  const nodes = [];
-  const nLines = 6;
-  for(let i=0;i<nLines;i++){
-    const a = (i/nLines)*Math.PI*2 + 0.3;
-    const len = interiorPxR*(0.55+Math.random()*0.35);
-    const x2 = cx + Math.cos(a)*len, y2 = cy + Math.sin(a)*len;
-    ctx.strokeStyle = i%2===0 ? 'rgba(95,247,224,0.22)' : 'rgba(255,61,138,0.16)';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(x2,y2); ctx.stroke();
-    nodes.push([x2,y2, i%2===0?'#5ff7e0':'#ff3d8a']);
-  }
-  nodes.forEach(([x,y,c])=>{
-    ctx.fillStyle = c; ctx.globalAlpha = 0.5;
-    ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2); ctx.fill();
-    ctx.globalAlpha = 1;
-  });
-  ctx.fillStyle = 'rgba(95,247,224,0.6)';
-  ctx.beginPath(); ctx.arc(cx,cy,5,0,Math.PI*2); ctx.fill();
-  ctx.restore();
-
-  ctx.strokeStyle='rgba(95,247,224,0.35)'; ctx.lineWidth=3;
-  ctx.beginPath(); ctx.arc(cx,cy,interiorPxR,0,Math.PI*2); ctx.stroke();
-
-  const tex = new THREE.CanvasTexture(cv);
-  tex.encoding = THREE.sRGBEncoding;
-  return tex;
+// Textura blanca pura con mínima textura
+function createWhiteTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#f5f0eb'; // Blanco hueso
+    ctx.fillRect(0, 0, 512, 512);
+    for (let i = 0; i < 3000; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        const r = Math.random() * 1.2;
+        const alpha = Math.random() * 0.04;
+        ctx.fillStyle = `rgba(200,190,180,${alpha})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(6, 6);
+    texture.anisotropy = 4;
+    return texture;
 }
 
-const floorGeo = new THREE.CircleGeometry(OUTER_R, 96);
-const floorMat = new THREE.MeshStandardMaterial({
-  map: buildFloorTexture(), color: 0xffffff, roughness:0.9, metalness:0.03
-});
-const floor = new THREE.Mesh(floorGeo, floorMat);
-floor.rotation.x = -Math.PI/2;
-scene.add(floor);
+const whiteTex = createWhiteTexture();
 
-/* --- nodos de color en movimiento sobre el piso interior -------------
-   Pequeños puntos emisivos que recorren de ida y vuelta las mismas
-   lineas nodales dibujadas en el piso, dando sensacion de flujo de datos. --- */
+// Material blanco para paredes y suelo exterior
+const whiteMat = new THREE.MeshStandardMaterial({
+    map: whiteTex,
+    roughness: 0.7,
+    metalness: 0.02,
+    color: 0xf5f0eb,
+});
+
+// Paredes blancas
+function createWall(w, h, x, y, z, rz=0) {
+    const geo = new THREE.PlaneGeometry(w, h);
+    const mesh = new THREE.Mesh(geo, whiteMat);
+    mesh.position.set(x, y, z);
+    mesh.rotation.y = rz;
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.rotation.order = 'YXZ';
+    scene.add(mesh);
+    return mesh;
+}
+
+const wallHeight = ROOM_HEIGHT;
+const wallY = wallHeight/2;
+createWall(ROOM_SIZE, wallHeight, 0, wallY, -ROOM_HALF, 0);
+createWall(ROOM_SIZE, wallHeight, 0, wallY, ROOM_HALF, Math.PI);
+createWall(ROOM_SIZE, wallHeight, -ROOM_HALF, wallY, 0, -Math.PI/2);
+createWall(ROOM_SIZE, wallHeight, ROOM_HALF, wallY, 0, Math.PI/2);
+
+// Techo (mantiene color gris oscuro)
+function createCeilingTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#7a7a7a';
+    ctx.fillRect(0, 0, 512, 512);
+    for (let i = 0; i < 8000; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        const r = Math.random() * 2;
+        const alpha = Math.random() * 0.08;
+        ctx.fillStyle = `rgba(0,0,0,${alpha})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(6, 6);
+    texture.anisotropy = 4;
+    return texture;
+}
+
+const ceilingMat = new THREE.MeshStandardMaterial({
+    map: createCeilingTexture(),
+    roughness: 0.9,
+    metalness: 0.05,
+    color: 0x8a8a8a,
+    side: THREE.BackSide
+});
+const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_SIZE, ROOM_SIZE), ceilingMat);
+ceiling.rotation.x = -Math.PI/2;
+ceiling.position.y = ROOM_HEIGHT;
+scene.add(ceiling);
+
+// Suelo exterior - BLANCO (igual que las paredes)
+const floorMatExterior = new THREE.MeshStandardMaterial({
+    map: whiteTex,
+    roughness: 0.8,
+    metalness: 0.05,
+    color: 0xf5f0eb,
+});
+const floorExterior = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_SIZE, ROOM_SIZE), floorMatExterior);
+floorExterior.rotation.x = -Math.PI/2;
+floorExterior.position.y = 0.01;
+scene.add(floorExterior);
+
+// Suelo interior del domo - gris oscuro con nodos en movimiento
+function createInteriorFloorTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#2a2e30';
+    ctx.fillRect(0, 0, 1024, 1024);
+    for (let i = 0; i < 15000; i++) {
+        const x = Math.random() * 1024;
+        const y = Math.random() * 1024;
+        const r = Math.random() * 2;
+        const alpha = Math.random() * 0.15;
+        ctx.fillStyle = `rgba(0,0,0,${alpha})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(4, 4);
+    texture.anisotropy = 4;
+    return texture;
+}
+
+const interiorFloorMat = new THREE.MeshStandardMaterial({
+    map: createInteriorFloorTexture(),
+    roughness: 0.9,
+    metalness: 0.05,
+    color: 0x2a2e30,
+});
+
+const interiorFloorGeo = new THREE.CircleGeometry(baseRadius * 1.02, 64);
+const interiorFloor = new THREE.Mesh(interiorFloorGeo, interiorFloorMat);
+interiorFloor.rotation.x = -Math.PI/2;
+interiorFloor.position.y = 0.015;
+scene.add(interiorFloor);
+
+/* ---------------------------------------------------------------------
+   NODOS DE COLOR EN MOVIMIENTO - CARTOGRAFÍAS (dentro del domo)
+--------------------------------------------------------------------- */
 const FLOOR_LINE_DEFS = [
-  {az:0.30, len:0.62, color:0x5ff7e0},
-  {az:1.35, len:0.78, color:0xff3d8a},
-  {az:2.39, len:0.58, color:0x5ff7e0},
-  {az:3.44, len:0.83, color:0xff3d8a},
-  {az:4.49, len:0.66, color:0x5ff7e0},
-  {az:5.53, len:0.73, color:0xff3d8a},
+  {az:0.15, len:0.55, color:0x5ff7e0},
+  {az:0.85, len:0.72, color:0xff3d8a},
+  {az:1.55, len:0.48, color:0x5ff7e0},
+  {az:2.25, len:0.68, color:0xff3d8a},
+  {az:2.95, len:0.82, color:0x5ff7e0},
+  {az:3.65, len:0.54, color:0xff3d8a},
+  {az:4.35, len:0.76, color:0x5ff7e0},
+  {az:5.05, len:0.60, color:0xff3d8a},
+  {az:5.75, len:0.70, color:0x5ff7e0},
+  {az:6.45, len:0.50, color:0xff3d8a},
+  {az:7.15, len:0.80, color:0x5ff7e0},
+  {az:7.85, len:0.62, color:0xff3d8a},
 ];
 const floorTravelers = [];
 FLOOR_LINE_DEFS.forEach((L,i)=>{
-  const lenWorld = baseRadius*L.len;
+  const lenWorld = baseRadius * L.len;
   for(let k=0;k<2;k++){
     const dot = new THREE.Mesh(
-      new THREE.CircleGeometry(0.055,14),
-      new THREE.MeshBasicMaterial({ color:L.color, transparent:true, opacity:0.85, blending:THREE.AdditiveBlending, depthWrite:false })
+      new THREE.CircleGeometry(0.045, 12),
+      new THREE.MeshBasicMaterial({
+        color: L.color,
+        transparent: true,
+        opacity: 0.7,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      })
     );
     dot.rotation.x = -Math.PI/2;
-    dot.position.y = 0.015;
-    dot.userData = { az:L.az, lenWorld, speed:0.32+0.11*k, phase:i*1.7+k*3.1 };
+    dot.position.y = 0.02;
+    dot.userData = {
+      az: L.az,
+      lenWorld,
+      speed: 0.25 + 0.08 * k,
+      phase: i * 1.2 + k * 2.7,
+      offset: 0.15 + 0.7 * (i / FLOOR_LINE_DEFS.length)
+    };
     scene.add(dot);
     floorTravelers.push(dot);
   }
 });
 
+const lineMat = new THREE.LineBasicMaterial({
+  color: 0x5ff7e0,
+  transparent: true,
+  opacity: 0.15,
+  blending: THREE.AdditiveBlending
+});
+const linePoints = [];
+for(let i = 0; i < 30; i++){
+  const ang = (i / 30) * Math.PI * 2;
+  const r = baseRadius * (0.3 + 0.6 * (i / 30));
+  linePoints.push(new THREE.Vector3(Math.sin(ang) * r, 0.02, Math.cos(ang) * r));
+}
+const lineGeo = new THREE.BufferGeometry().setFromPoints(linePoints);
+const lineMesh = new THREE.Line(lineGeo, lineMat);
+scene.add(lineMesh);
+
+const linePoints2 = [];
+for(let i = 0; i < 24; i++){
+  const ang = (i / 24) * Math.PI * 2 + 0.5;
+  const r = baseRadius * (0.45 + 0.35 * Math.sin(i * 0.7));
+  linePoints2.push(new THREE.Vector3(Math.sin(ang) * r, 0.02, Math.cos(ang) * r));
+}
+const lineGeo2 = new THREE.BufferGeometry().setFromPoints(linePoints2);
+const lineMesh2 = new THREE.Line(lineGeo2, new THREE.LineBasicMaterial({
+  color: 0xff3d8a,
+  transparent: true,
+  opacity: 0.1,
+  blending: THREE.AdditiveBlending
+}));
+scene.add(lineMesh2);
+
 /* ---------------------------------------------------------------------
-   CONTEXTO URBANO: cielo diurno + edificios lejanos
-   (la explanada representa un entorno exterior del Metro de Santiago)
+   QUIMERA FLOTANTE (AR) - Fuera del domo
 --------------------------------------------------------------------- */
-function buildSkyTexture(){
-  const w=16, h=512;
-  const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
-  const ctx=cv.getContext('2d');
-  const g=ctx.createLinearGradient(0,0,0,h);
-  g.addColorStop(0,'#3f83c4');
-  g.addColorStop(0.45,'#7fb3dc');
-  g.addColorStop(0.75,'#cfe6ef');
-  g.addColorStop(1,'#e9ece2');
-  ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
-  const tex=new THREE.CanvasTexture(cv);
-  tex.encoding = THREE.sRGBEncoding;
-  return tex;
-}
-const sky = new THREE.Mesh(
-  new THREE.SphereGeometry(OUTER_R*3.2, 24, 16),
-  new THREE.MeshBasicMaterial({ map:buildSkyTexture(), side:THREE.BackSide, fog:false })
-);
-scene.add(sky);
+const chimeraGroup = new THREE.Group();
+scene.add(chimeraGroup);
 
-// siluetas de edificios lejanos, mas alla del borde de la explanada (tonos claros de dia)
-function buildingSilhouette(w,h,d,x,z,color){
-  const m = new THREE.Mesh(
-    new THREE.BoxGeometry(w,h,d),
-    new THREE.MeshStandardMaterial({ color, roughness:0.85, metalness:0.05 })
+const chimeraMat = new THREE.MeshStandardMaterial({
+  color: 0x5ff7e0,
+  emissive: 0x5ff7e0,
+  emissiveIntensity: 0.3,
+  transparent: true,
+  opacity: 0.6,
+  roughness: 0.2,
+  metalness: 0.8,
+  wireframe: false
+});
+
+const torusKnot = new THREE.Mesh(
+  new THREE.TorusKnotGeometry(0.6, 0.2, 64, 8),
+  chimeraMat
+);
+torusKnot.position.set(0, 2.0, 0);
+torusKnot.scale.set(1, 0.8, 1);
+chimeraGroup.add(torusKnot);
+
+const particleCount = 200;
+const particleGeo = new THREE.BufferGeometry();
+const particlePos = new Float32Array(particleCount * 3);
+for(let i = 0; i < particleCount * 3; i++){
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.random() * Math.PI * 2;
+  const r = 0.8 + Math.random() * 0.6;
+  particlePos[i*3] = Math.sin(theta) * Math.cos(phi) * r;
+  particlePos[i*3+1] = Math.sin(theta) * Math.sin(phi) * r + 0.2;
+  particlePos[i*3+2] = Math.cos(theta) * r;
+}
+particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
+const particleMat = new THREE.PointsMaterial({
+  color: 0x5ff7e0,
+  size: 0.03,
+  transparent: true,
+  opacity: 0.6,
+  blending: THREE.AdditiveBlending
+});
+const particles = new THREE.Points(particleGeo, particleMat);
+particles.position.set(0, 2.0, 0);
+chimeraGroup.add(particles);
+
+const ringMat = new THREE.MeshBasicMaterial({
+  color: 0xff3d8a,
+  transparent: true,
+  opacity: 0.2,
+  wireframe: true,
+  blending: THREE.AdditiveBlending
+});
+for(let i = 0; i < 3; i++){
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(0.7 + i * 0.2, 0.015, 16, 32),
+    ringMat
   );
-  m.position.set(x, h/2, z);
-  scene.add(m);
+  ring.position.set(0, 2.0 + i * 0.15, 0);
+  ring.rotation.x = Math.PI / 3 + i * 0.3;
+  ring.rotation.z = i * 0.5;
+  chimeraGroup.add(ring);
 }
-const cityR = OUTER_R + 14;
-const buildingTones = [0x9aa4ab, 0xb3bcc0, 0x8b969c, 0xc2c8c2];
-for(let i=0;i<10;i++){
-  const a = (i/10)*Math.PI*2 + 0.15;
-  const w = 3+Math.random()*4, d = 3+Math.random()*4, h = 5+Math.random()*16;
-  buildingSilhouette(w,h,d, Math.sin(a)*cityR, Math.cos(a)*cityR, buildingTones[i%buildingTones.length]);
-}
+
+chimeraGroup.position.set(baseRadius + 2.0, 0, 2.5);
 
 /* ---------------------------------------------------------------------
-   ESTRUCTURA GEODESICA (paneles + tensores)
+   ESTRUCTURA GEODESICA
 --------------------------------------------------------------------- */
 const domeGroup = new THREE.Group();
 scene.add(domeGroup);
 
 const ico = new THREE.IcosahedronGeometry(SPHERE_R, DETAIL);
-ico.translate(0, translateY, 0); // recortar bajo el ecuador y apoyar la base en y=0
+ico.translate(0, translateY, 0);
 
 const pos = ico.attributes.position;
 const panelVerts = [];
@@ -367,7 +458,6 @@ function addEdge(a,b){
 }
 
 const v0 = new THREE.Vector3(), v1 = new THREE.Vector3(), v2 = new THREE.Vector3();
-const openTriCentroid = new THREE.Vector3();
 let triIndex = 0;
 for(let i=0;i<pos.count;i+=3){
   v0.fromBufferAttribute(pos,i);
@@ -375,14 +465,13 @@ for(let i=0;i<pos.count;i+=3){
   v2.fromBufferAttribute(pos,i+2);
   const cy = (v0.y+v1.y+v2.y)/3;
   const inDoor = inDoorway(v0.x,v0.z,v0.y) && inDoorway(v1.x,v1.z,v1.y) && inDoorway(v2.x,v2.z,v2.y);
-  if(cy > 0.03 && !inDoor){ // conservar la cupula, dejando el vano de la puerta abierto
-    addEdge(v0,v1); addEdge(v1,v2); addEdge(v2,v0); // la estructura (tensores) se conserva siempre
+  if(cy > 0.03 && !inDoor){
+    addEdge(v0,v1); addEdge(v1,v2); addEdge(v2,v0);
 
-    openTriCentroid.set((v0.x+v1.x+v2.x)/3, cy, (v0.z+v1.z+v2.z)/3);
+    const openTriCentroid = new THREE.Vector3((v0.x+v1.x+v2.x)/3, cy, (v0.z+v1.z+v2.z)/3);
     const triAz = Math.atan2(openTriCentroid.x, openTriCentroid.z);
     const nearDoor = angleDelta(triAz, DOOR_AZIMUTH) < DOOR_HALF_WIDTH + 0.22;
     const nearScreenWall = angleDelta(triAz, SCREEN_AZ_CENTER) < SCREEN_AZ_HALF;
-    // pseudo-aleatorio estable (sin Math.random) para decidir que paneles quedan sin cobertura
     const hash = Math.abs(Math.sin(triIndex*12.9898)*43758.5453) % 1;
     const isOpenGap = hash < 0.16 && cy > 1.0 && cy < DOME_HEIGHT*0.88 &&
                        !nearDoor && !nearScreenWall;
@@ -393,7 +482,6 @@ for(let i=0;i<pos.count;i+=3){
   triIndex++;
 }
 
-// piel exterior: opaca y "cubierta" (no deja ver el interior ni su color)
 const panelGeo = new THREE.BufferGeometry();
 panelGeo.setAttribute('position', new THREE.Float32BufferAttribute(panelVerts,3));
 panelGeo.computeVertexNormals();
@@ -402,7 +490,6 @@ const panelMat = new THREE.MeshStandardMaterial({
 });
 domeGroup.add(new THREE.Mesh(panelGeo, panelMat));
 
-// tensores / estructura visible desde fuera y desde dentro: blancos, NO se animan, y mas delgados
 const strutMat = new THREE.MeshStandardMaterial({
   color:0xf5f5f2, roughness:0.5, metalness:0.15
 });
@@ -425,15 +512,11 @@ edgeMap.forEach(([a,b])=>{
 });
 domeGroup.add(strutMesh);
 
-/* --- capa interior que cambia de color -------------------------------
-   Un segundo set de tubos, mas delgado y desplazado hacia el centro de
-   la cupula, sigue las mismas aristas pero queda por dentro de la piel
-   opaca: solo es visible desde el interior, nunca desde afuera. --- */
 const sphereCenterVec = new THREE.Vector3(0, translateY, 0);
 const innerGlowMat = new THREE.MeshStandardMaterial({
   color:0x030405, emissive:0xff2e2e, emissiveIntensity:1.3, roughness:0.5, metalness:0.2
 });
-const INNER_OFFSET = 0.045; // separacion respecto de la piel exterior
+const INNER_OFFSET = 0.045;
 const innerRadius = 0.016;
 const cylInner = new THREE.CylinderGeometry(innerRadius, innerRadius, 1, 6, 1);
 const innerGlowMesh = new THREE.InstancedMesh(cylInner, innerGlowMat, edgeMap.size);
@@ -459,12 +542,10 @@ edgeMap.forEach(([a,b])=>{
 });
 domeGroup.add(innerGlowMesh);
 
-// luz ambiental interior que acompaña el cambio de color (solo alcanza el interior)
 const interiorMoodLight = new THREE.PointLight(0xff2e2e, 0.45, 5, 2);
 interiorMoodLight.position.set(0, 2.0, 0);
 scene.add(interiorMoodLight);
 
-/* oculo superior: se omite el casquete y se agrega un haz de luz */
 const domeTopLight = new THREE.PointLight(0xfff0d0, 0.55, 10, 2);
 domeTopLight.position.set(0, DOME_HEIGHT*0.98, 0);
 scene.add(domeTopLight);
@@ -477,173 +558,79 @@ const beam = new THREE.Mesh(beamGeo, beamMat);
 beam.position.set(0, DOME_HEIGHT*0.7, 0);
 scene.add(beam);
 
-/* (PROYECCION EXTERIOR DE QUIMERA se define mas abajo, luego de drawChimera) */
-
 /* ---------------------------------------------------------------------
-   ILUMINACION GENERAL
+   PANTALLA CURVA CON FRASES DEL DOCUMENTO
 --------------------------------------------------------------------- */
-scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-const hemi = new THREE.HemisphereLight(0xbfe0ff, 0x9a9484, 0.85);
-scene.add(hemi);
-const sun = new THREE.DirectionalLight(0xfff4e0, 1.0);
-sun.position.set(OUTER_R*0.6, OUTER_R*1.1, OUTER_R*0.35);
-scene.add(sun);
-
-/* ---------------------------------------------------------------------
-   PANTALLAS (contenido de la obra sobre el Metro de Santiago)
---------------------------------------------------------------------- */
-function makeScreenCanvas(drawFn, w=1024, h=640){
-  const cv = document.createElement('canvas'); cv.width=w; cv.height=h;
-  const ctx = cv.getContext('2d');
-  drawFn(ctx,w,h);
-  const tex = new THREE.CanvasTexture(cv);
-  tex.encoding = THREE.sRGBEncoding;
-  tex.anisotropy = 4;
-  return tex;
-}
-
-function panelBase(ctx,w,h){
-  ctx.fillStyle = '#050708'; ctx.fillRect(0,0,w,h);
-  const g = ctx.createLinearGradient(0,0,0,h);
-  g.addColorStop(0,'rgba(95,247,224,0.05)'); g.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
-}
-function eyebrow(ctx,text,x,y,color){
-  ctx.fillStyle=color; ctx.font='600 15px monospace';
-  ctx.textBaseline='alphabetic';
-  let spaced=''; for(const c of text) spaced+=c+String.fromCharCode(8202)+String.fromCharCode(8202);
-  ctx.fillText(spaced,x,y);
-}
-
-// -- Sección 1: los tres nodos de interacción del proyecto
-function drawNodesSection(ctx,w,h){
-  panelBase(ctx,w,h);
-  eyebrow(ctx,'MEDIACIÓN DISTRIBUIDA', 48, 64, '#5ff7e0');
-  ctx.fillStyle='#e9f4f1'; ctx.font='300 32px monospace';
-  ctx.fillText('Tres nodos de', 48, 108);
-  ctx.fillText('interacción', 48, 144);
-
-  const nodes = [
-    { t:'01 · CELULAR', c:'#5ff7e0', d:['"Not QR": encuentra, activa y descubre','en vez de escanear pasivamente.'] },
-    { t:'02 · PANTALLAS Y AUDIO', c:'#ff3d8a', d:['Palabras clave como puertas de entrada:','memoria, territorio, cuerpo, identidad.'] },
-    { t:'03 · PUNTOS SENSIBLES', c:'#ffcf5c', d:['El cuerpo como interfaz: presencia,','distancia y movimiento activan la obra.'] },
-  ];
-  const top=190, rowH=(h-top-70)/3;
-  nodes.forEach((n,i)=>{
-    const y = top + i*rowH;
-    ctx.fillStyle = n.c; ctx.globalAlpha=0.12;
-    ctx.fillRect(48, y, w-96, rowH-18);
-    ctx.globalAlpha=1;
-    ctx.strokeStyle = n.c; ctx.lineWidth=2;
-    ctx.strokeRect(48, y, w-96, rowH-18);
-    ctx.fillStyle = n.c; ctx.font='600 17px monospace';
-    ctx.fillText(n.t, 68, y+34);
-    ctx.fillStyle = '#c7d3d5'; ctx.font='14px monospace';
-    n.d.forEach((line,li)=> ctx.fillText(line, 68, y+60+li*22));
-    if(i<nodes.length-1){
-      ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.moveTo(w/2, y+rowH-18); ctx.lineTo(w/2, y+rowH); ctx.stroke();
-    }
-  });
-
-  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.beginPath();
-  ctx.moveTo(48,h-46); ctx.lineTo(w-48,h-46); ctx.stroke();
-  ctx.fillStyle='#5a6b70'; ctx.font='11px monospace';
-  ctx.fillText('RED DE EXPERIENCIAS SENSIBLES · ARTE, PATRIMONIO E INTERACTIVIDAD', 48, h-24);
-}
-
-// -- Sección 2: generador de quimeras (Obra A + Obra B + usuario + IA)
-const CHIMERA_PALETTES = [
-  ['#5ff7e0','#ff3d8a','#ffcf5c'],
-  ['#ff3d8a','#a347ff','#5ff7e0'],
-  ['#ffcf5c','#33e07a','#3a7bff'],
+const FRASES = [
+  "¿Cómo recorremos el Metro?",
+  "Origen → descubrimiento → interacción → desplazamiento → nueva obra",
+  "La estación deja de ser un punto de paso",
+  "El viaje es parte de la obra",
+  "Obra A + Obra B + usuario + IA = QUIMERA",
+  "ARTISTA + PATRIMONIO + TRANSEÚNTE + IA → QUIMERA",
+  "El patrimonio se convierte en punto de partida",
+  "Red de Experiencias Sensibles",
+  "Arte, patrimonio e interactividad",
+  "El Metro como mundo navegable",
+  "Dos estaciones generan una tercera obra",
+  "El cuerpo como interfaz",
+  "Memoria, territorio, identidad",
+  "La distancia se convierte en material artístico"
 ];
-function drawChimera(ctx,w,h,paletteIndex=0){
-  panelBase(ctx,w,h);
-  eyebrow(ctx,'GENERADOR QUIMERA', 48, 64, '#ff3d8a');
-  ctx.fillStyle='#e9f4f1'; ctx.font='300 30px monospace';
-  ctx.fillText('Obra A + Obra B', 48, 108);
-  ctx.fillStyle='#7d8d92'; ctx.font='14px monospace';
-  ctx.fillText('+ intervención del usuario + IA = QUIMERA', 48, 134);
 
-  const gx=4, gy=3, pad=48, top=170;
-  const cw=(w-pad*2)/gx, ch=(h-top-40)/gy;
-  const palette = CHIMERA_PALETTES[paletteIndex % CHIMERA_PALETTES.length];
-  let idx=0;
-  for(let j=0;j<gy;j++){
-    for(let i=0;i<gx;i++){
-      const x=pad+i*cw, y=top+j*ch;
-      const c1=palette[idx%3], c2=palette[(idx+1)%3];
-      const g=ctx.createLinearGradient(x,y,x+cw,y+ch);
-      g.addColorStop(0, c1+'22'); g.addColorStop(1, c2+'11');
-      ctx.fillStyle=g; ctx.fillRect(x+3,y+3,cw-6,ch-6);
-      ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.strokeRect(x+3,y+3,cw-6,ch-6);
-      // trama tipo cross-hatch, referencia al filtro de lápiz
-      ctx.strokeStyle=c1+'55'; ctx.lineWidth=1;
-      for(let l=-ch;l<cw;l+=9){
-        ctx.beginPath(); ctx.moveTo(x+l,y+ch-6); ctx.lineTo(x+l+ch,y+6); ctx.stroke();
-      }
-      idx++;
-    }
+function createTextTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 2048;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#050708';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  grad.addColorStop(0, 'rgba(95,247,224,0.03)');
+  grad.addColorStop(0.5, 'rgba(255,61,138,0.03)');
+  grad.addColorStop(1, 'rgba(255,207,92,0.03)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = 'rgba(95,247,224,0.08)';
+  ctx.lineWidth = 2;
+  for(let i = 0; i < 12; i++){
+    const y = 60 + i * 80;
+    ctx.beginPath();
+    ctx.moveTo(40, y);
+    ctx.lineTo(canvas.width - 40, y);
+    ctx.stroke();
   }
-  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.beginPath();
-  ctx.moveTo(48,h-46); ctx.lineTo(w-48,h-46); ctx.stroke();
-  ctx.fillStyle='#5a6b70'; ctx.font='11px monospace';
-  ctx.fillText('ARTISTA + PATRIMONIO + TRANSEÚNTE + IA → QUIMERA', 48, h-24);
-}
 
-// -- Sección 3: modelo de experiencia / manifiesto del proyecto
-function drawConceptSection(ctx,w,h){
-  panelBase(ctx,w,h);
-  eyebrow(ctx,'MODELO DE EXPERIENCIA', 48, 64, '#ffcf5c');
-  ctx.fillStyle='#e9f4f1'; ctx.font='300 28px monospace';
-  ctx.fillText('¿Cómo recorremos', 48, 106);
-  ctx.fillText('el Metro?', 48, 140);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
 
-  const steps = ['ORIGEN','DESCUBRIMIENTO','INTERACCIÓN','DESPLAZAMIENTO','NUEVA OBRA'];
-  const sy = 186, sx = 48;
-  ctx.font='12px monospace';
-  let cx = sx;
-  steps.forEach((s,i)=>{
-    ctx.fillStyle = i%2===0 ? '#5ff7e0' : '#ff3d8a';
-    const tw = ctx.measureText(s).width + 18;
-    ctx.globalAlpha=0.15; ctx.fillRect(cx, sy-16, tw, 24); ctx.globalAlpha=1;
-    ctx.fillText(s, cx+9, sy);
-    cx += tw;
-    if(i<steps.length-1){
-      ctx.fillStyle='#5a6b70'; ctx.fillText('→', cx+2, sy);
-      cx += 20;
-    }
+  const colors = ['#5ff7e0', '#ff3d8a', '#ffcf5c', '#e9f4f1'];
+  let yPos = 60;
+
+  FRASES.forEach((frase, index) => {
+    const color = colors[index % colors.length];
+    ctx.fillStyle = color;
+    ctx.font = `${36 + (index % 3) * 4}px 'Courier New', monospace`;
+    ctx.globalAlpha = 0.7 + 0.3 * (index / FRASES.length);
+    ctx.fillText(`✦ ${frase}`, 60, yPos);
+    yPos += 80;
   });
 
-  const lines = [
-    'La estación deja de ser un punto de paso y se',
-    'convierte en un punto de atención, juego,',
-    'memoria y producción de significado.',
-    ' ',
-    'Dos obras en estaciones distintas pueden generar',
-    'una tercera: el desplazamiento físico entre ellas',
-    'es parte del proceso creativo.',
-  ];
-  ctx.fillStyle='#b9c6c9'; ctx.font='15px monospace';
-  let y=246;
-  lines.forEach(l=>{ ctx.fillText(l,48,y); y+=27; });
+  ctx.globalAlpha = 1;
 
-  ctx.fillStyle='#ffcf5c'; ctx.font='italic 16px monospace';
-  ctx.fillText('"El viaje es parte de la obra."', 48, y+14);
-
-  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.beginPath();
-  ctx.moveTo(48,h-46); ctx.lineTo(w-48,h-46); ctx.stroke();
-  ctx.fillStyle='#5a6b70'; ctx.font='11px monospace';
-  ctx.fillText('QUIMERAS: ARTE & PATRIMONIO · FAC. DE ARTES Y FAC. DE INGENIERÍA', 48, h-24);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.encoding = THREE.sRGBEncoding;
+  texture.anisotropy = 4;
+  return texture;
 }
 
-/* --- pantalla curva unica, con las tres secciones ---------------------
-   Reemplaza las tres pantallas planas por una sola superficie curva que
-   cubre la misma area de pared, dividida en tres secciones de contenido. */
-const CURVED_SCREEN_R = baseRadius*0.84;
-const CURVED_SCREEN_Y0 = 0.85, CURVED_SCREEN_Y1 = 2.35;
-const CURVED_SEGMENTS = 64;
+const CURVED_SCREEN_R = baseRadius * 0.84;
+const CURVED_SCREEN_Y0 = 0.6;
+const CURVED_SCREEN_Y1 = 2.8;
+const CURVED_SEGMENTS = 80;
 
 function buildCurvedScreenGeometry(azStart, azEnd, r, y0, y1, segments){
   const geo = new THREE.BufferGeometry();
@@ -653,11 +640,11 @@ function buildCurvedScreenGeometry(azStart, azEnd, r, y0, y1, segments){
     const az = azStart + (azEnd-azStart)*t;
     const x = Math.sin(az)*r, z = Math.cos(az)*r;
     verts.push(x,y0,z,  x,y1,z);
-    uvs.push(1-t,0,  1-t,1); // invertido: para que se lea correctamente visto desde el interior
+    uvs.push(t,0,  t,1);
   }
   for(let i=0;i<segments;i++){
     const a=i*2, b=i*2+1, c=i*2+2, d=i*2+3;
-    idx.push(a,b,c, b,d,c); // orden para normal hacia el centro (interior)
+    idx.push(a,b,c, b,d,c);
   }
   geo.setIndex(idx);
   geo.setAttribute('position', new THREE.Float32BufferAttribute(verts,3));
@@ -666,139 +653,205 @@ function buildCurvedScreenGeometry(azStart, azEnd, r, y0, y1, segments){
   return geo;
 }
 
-// textura compuesta: tres secciones dibujadas por separado y unidas
-function buildInteriorCurvedTexture(chimeraIndex=0){
-  const secW=900, secH=900;
-  const mk = (fn)=>{ const c=document.createElement('canvas'); c.width=secW; c.height=secH; fn(c.getContext('2d'),secW,secH); return c; };
-  const s1 = mk(drawNodesSection);
-  const s2 = mk((ctx,w,h)=>drawChimera(ctx,w,h,chimeraIndex));
-  const s3 = mk(drawConceptSection);
+const curvedScreenMat = new THREE.MeshBasicMaterial({
+  map: createTextTexture(),
+  toneMapped: false,
+  side: THREE.DoubleSide
+});
 
-  const big = document.createElement('canvas'); big.width=secW*3; big.height=secH;
-  const bctx = big.getContext('2d');
-  bctx.drawImage(s1,0,0); bctx.drawImage(s2,secW,0); bctx.drawImage(s3,secW*2,0);
-  bctx.strokeStyle='rgba(255,255,255,0.15)'; bctx.lineWidth=3;
-  bctx.beginPath(); bctx.moveTo(secW,0); bctx.lineTo(secW,secH); bctx.stroke();
-  bctx.beginPath(); bctx.moveTo(secW*2,0); bctx.lineTo(secW*2,secH); bctx.stroke();
+const curvedScreenGeo = buildCurvedScreenGeometry(
+  SCREEN_AZ_START, SCREEN_AZ_END, CURVED_SCREEN_R,
+  CURVED_SCREEN_Y0, CURVED_SCREEN_Y1, CURVED_SEGMENTS
+);
+const curvedScreenMesh = new THREE.Mesh(curvedScreenGeo, curvedScreenMat);
+domeGroup.add(curvedScreenMesh);
 
-  const tex = new THREE.CanvasTexture(big);
-  tex.encoding = THREE.sRGBEncoding;
-  tex.anisotropy = 4;
-  return tex;
-}
-
-// respaldo oscuro, un poco mas grande, detras de la pantalla curva
 const curvedBackingGeo = buildCurvedScreenGeometry(
-  SCREEN_AZ_START-0.02, SCREEN_AZ_END+0.02, CURVED_SCREEN_R+0.03,
-  CURVED_SCREEN_Y0-0.09, CURVED_SCREEN_Y1+0.09, CURVED_SEGMENTS
+  SCREEN_AZ_START-0.02, SCREEN_AZ_END+0.02, CURVED_SCREEN_R+0.05,
+  CURVED_SCREEN_Y0-0.1, CURVED_SCREEN_Y1+0.1, CURVED_SEGMENTS
 );
 const curvedBacking = new THREE.Mesh(curvedBackingGeo,
   new THREE.MeshStandardMaterial({ color:0x0a0d0e, roughness:0.6, metalness:0.4, side:THREE.DoubleSide })
 );
 domeGroup.add(curvedBacking);
 
-const curvedScreenGeo = buildCurvedScreenGeometry(
-  SCREEN_AZ_START, SCREEN_AZ_END, CURVED_SCREEN_R, CURVED_SCREEN_Y0, CURVED_SCREEN_Y1, CURVED_SEGMENTS
-);
-let interiorChimeraIndex = 0;
-const curvedScreenMesh = new THREE.Mesh(curvedScreenGeo,
-  new THREE.MeshBasicMaterial({ map: buildInteriorCurvedTexture(interiorChimeraIndex), toneMapped:false, side:THREE.DoubleSide })
-);
-domeGroup.add(curvedScreenMesh);
-
-// luces de acento, una por seccion
-const curvedSectionLights = [
-  { az: SCREEN_AZ_START + (SCREEN_AZ_END-SCREEN_AZ_START)*(5/6), color:0x5ff7e0 }, // 01 nodos
-  { az: SCREEN_AZ_START + (SCREEN_AZ_END-SCREEN_AZ_START)*(3/6), color:0xff3d8a }, // 02 quimera
-  { az: SCREEN_AZ_START + (SCREEN_AZ_END-SCREEN_AZ_START)*(1/6), color:0xffcf5c }, // 03 concepto
+const sectionLights = [
+  { az: SCREEN_AZ_START + (SCREEN_AZ_END-SCREEN_AZ_START)*(5/6), color:0x5ff7e0 },
+  { az: SCREEN_AZ_START + (SCREEN_AZ_END-SCREEN_AZ_START)*(3/6), color:0xff3d8a },
+  { az: SCREEN_AZ_START + (SCREEN_AZ_END-SCREEN_AZ_START)*(1/6), color:0xffcf5c },
 ];
-curvedSectionLights.forEach(s=>{
-  const lx = Math.sin(s.az)*(CURVED_SCREEN_R-0.9), lz = Math.cos(s.az)*(CURVED_SCREEN_R-0.9);
-  const light = new THREE.PointLight(s.color, 0.8, 3.0, 2);
-  light.position.set(lx, 1.7, lz);
+sectionLights.forEach(s=>{
+  const lx = Math.sin(s.az)*(CURVED_SCREEN_R-0.5), lz = Math.cos(s.az)*(CURVED_SCREEN_R-0.5);
+  const light = new THREE.PointLight(s.color, 0.5, 3.0, 2);
+  light.position.set(lx, 1.8, lz);
   scene.add(light);
 });
 
-// etiquetas de proximidad por seccion (para el HUD)
-const curvedSections = [
-  { az: SCREEN_AZ_START + (SCREEN_AZ_END-SCREEN_AZ_START)*(5/6), label:'01 · Tres nodos de interacción' },
-  { az: SCREEN_AZ_START + (SCREEN_AZ_END-SCREEN_AZ_START)*(3/6), label:'02 · Generador de Quimeras' },
-  { az: SCREEN_AZ_START + (SCREEN_AZ_END-SCREEN_AZ_START)*(1/6), label:'03 · ¿Cómo recorremos el Metro?' },
-];
+/* ---------------------------------------------------------------------
+   PANEL DE CONTROL CENTRAL - A LA ALTURA DEL USUARIO (1.3m)
+--------------------------------------------------------------------- */
+const PANEL_HEIGHT = 1.25; // Altura de la pantalla táctil
 
-/* --- panel de control tactil central ----------------------------------
-   Controla que variante de Quimera se proyecta en el exterior del domo. */
-const controlBase = new THREE.Mesh(
-  new THREE.CylinderGeometry(0.24,0.30,0.85,20),
-  new THREE.MeshStandardMaterial({ color:0x101416, roughness:0.55, metalness:0.5 })
+// Pedestal / columna para el panel
+const pedestalMat = new THREE.MeshStandardMaterial({
+  color: 0x1a1e20,
+  roughness: 0.3,
+  metalness: 0.7,
+});
+const pedestal = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.08, 0.12, PANEL_HEIGHT - 0.15, 12),
+  pedestalMat
 );
-controlBase.position.set(0,0.425,0);
-domeGroup.add(controlBase);
+pedestal.position.set(0, (PANEL_HEIGHT - 0.15) / 2, 0);
+domeGroup.add(pedestal);
 
-function drawControlPanel(ctx,w,h,activeIndex){
-  ctx.fillStyle='#0a0d0e'; ctx.fillRect(0,0,w,h);
-  ctx.strokeStyle='rgba(95,247,224,0.5)'; ctx.lineWidth=6;
-  ctx.strokeRect(6,6,w-12,h-12);
-  ctx.fillStyle='#5ff7e0'; ctx.font='600 30px monospace'; ctx.textAlign='center';
-  ctx.fillText('PANEL DE CONTROL', w/2, 60);
-  ctx.fillStyle='#9fb0b4'; ctx.font='18px monospace';
-  ctx.fillText('sección 02 · generador de quimeras', w/2, 92);
+// Base rectangular para el panel
+const panelBaseMat = new THREE.MeshStandardMaterial({
+  color: 0x2a2e30,
+  roughness: 0.4,
+  metalness: 0.6,
+});
+const panelBaseMesh = new THREE.Mesh(
+  new THREE.BoxGeometry(0.7, 0.06, 0.45),
+  panelBaseMat
+);
+panelBaseMesh.position.set(0, PANEL_HEIGHT - 0.03, 0);
+domeGroup.add(panelBaseMesh);
 
-  const labels=['VARIANTE 1','VARIANTE 2','VARIANTE 3'];
-  const bw=(w-120)/3;
-  labels.forEach((lb,i)=>{
-    const x=60+i*bw;
-    const active = i===activeIndex;
-    ctx.fillStyle = active ? '#5ff7e0' : 'rgba(255,255,255,0.06)';
-    ctx.fillRect(x, 130, bw-20, 90);
-    ctx.strokeStyle = active ? '#5ff7e0' : 'rgba(255,255,255,0.25)'; ctx.lineWidth=3;
-    ctx.strokeRect(x, 130, bw-20, 90);
-    ctx.fillStyle = active ? '#04100e' : '#c7d3d5';
-    ctx.font='600 16px monospace';
-    ctx.fillText(lb, x+(bw-20)/2, 182);
+function createControlPanelTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 800;
+  canvas.height = 500;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#0a0d0e';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = 'rgba(95,247,224,0.4)';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+
+  ctx.fillStyle = '#5ff7e0';
+  ctx.font = '600 36px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('PANEL DE CONTROL', canvas.width/2, 65);
+
+  ctx.fillStyle = '#9fb0b4';
+  ctx.font = '18px monospace';
+  ctx.fillText('generador de quimeras · red de experiencias sensibles', canvas.width/2, 105);
+
+  ctx.fillStyle = '#5ff7e0';
+  ctx.font = '14px monospace';
+  ctx.fillText('⚡ SISTEMA ACTIVO · ' + new Date().toLocaleTimeString(), canvas.width/2, 145);
+
+  const labels = ['VARIANTE 01', 'VARIANTE 02', 'VARIANTE 03'];
+  const bw = (canvas.width - 120) / 3;
+  const currentVariant = Math.floor(Date.now() / 3000) % 3;
+
+  labels.forEach((lb, i) => {
+    const x = 60 + i * bw;
+    const active = i === currentVariant;
+    ctx.fillStyle = active ? 'rgba(95,247,224,0.2)' : 'rgba(255,255,255,0.05)';
+    ctx.fillRect(x, 180, bw - 20, 80);
+    ctx.strokeStyle = active ? '#5ff7e0' : 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = active ? 3 : 1;
+    ctx.strokeRect(x, 180, bw - 20, 80);
+    ctx.fillStyle = active ? '#5ff7e0' : '#c7d3d5';
+    ctx.font = active ? '600 16px monospace' : '14px monospace';
+    ctx.fillText(lb, x + (bw - 20)/2, 228);
+    if(active){
+      ctx.fillStyle = 'rgba(95,247,224,0.1)';
+      ctx.fillRect(x + 5, 185, bw - 30, 4);
+    }
   });
-  ctx.textAlign='left';
-}
-const controlCanvas = document.createElement('canvas'); controlCanvas.width=600; controlCanvas.height=260;
-const controlCtx = controlCanvas.getContext('2d');
-drawControlPanel(controlCtx,600,260,0);
-const controlTex = new THREE.CanvasTexture(controlCanvas);
-controlTex.encoding = THREE.sRGBEncoding;
 
+  ctx.strokeStyle = 'rgba(95,247,224,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(40, 290);
+  ctx.lineTo(canvas.width - 40, 290);
+  ctx.stroke();
+
+  const nodos = ['📱 CELULAR', '🖥️ PANTALLAS', '👤 SENSORES'];
+  ctx.font = '13px monospace';
+  nodos.forEach((n, i) => {
+    const x = 60 + i * 240;
+    ctx.fillStyle = '#5a6b70';
+    ctx.fillText(n, x, 330);
+    ctx.fillStyle = '#5ff7e0';
+    ctx.font = '11px monospace';
+    ctx.fillText('● CONECTADO', x, 355);
+  });
+
+  ctx.fillStyle = '#7d8d92';
+  ctx.font = '12px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('PARTICIPACIONES: ' + Math.floor(100 + Math.random() * 50), 60, 410);
+  ctx.fillText('QUIMERAS GENERADAS: ' + Math.floor(20 + Math.random() * 30), 300, 410);
+  ctx.fillText('ESTACIONES ACTIVAS: 10', 600, 410);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.encoding = THREE.sRGBEncoding;
+  texture.anisotropy = 4;
+  return texture;
+}
+
+const controlPanelMat = new THREE.MeshBasicMaterial({
+  map: createControlPanelTexture(),
+  toneMapped: false,
+  side: THREE.DoubleSide
+});
 const controlPanelMesh = new THREE.Mesh(
-  new THREE.PlaneGeometry(0.62, 0.27),
-  new THREE.MeshBasicMaterial({ map:controlTex, toneMapped:false, side:THREE.DoubleSide })
+  new THREE.PlaneGeometry(0.6, 0.4),
+  controlPanelMat
 );
-controlPanelMesh.position.set(0, 0.92, 0);
-controlPanelMesh.rotation.x = -Math.PI/2.9; // ligeramente inclinado, como un atril tactil
+controlPanelMesh.position.set(0, PANEL_HEIGHT + 0.07, 0);
+controlPanelMesh.rotation.x = -Math.PI / 2.8;
 domeGroup.add(controlPanelMesh);
-controlPanelMesh.userData.label = 'Panel de control · toca para cambiar la Quimera';
+controlPanelMesh.userData.label = 'Panel de control · sistema de quimeras';
 
-const controlGlow = new THREE.PointLight(0x5ff7e0, 0.5, 2.5, 2);
-controlGlow.position.set(0,1.3,0);
-scene.add(controlGlow);
-
-function cycleChimeraVariant(){
-  interiorChimeraIndex = (interiorChimeraIndex+1) % CHIMERA_PALETTES.length;
-  curvedScreenMesh.material.map = buildInteriorCurvedTexture(interiorChimeraIndex);
-  curvedScreenMesh.material.needsUpdate = true;
-  drawControlPanel(controlCtx,600,260,interiorChimeraIndex);
-  controlTex.needsUpdate = true;
-}
-
-
+// Luz del panel
+const panelLight = new THREE.PointLight(0x5ff7e0, 0.3, 2.0, 2);
+panelLight.position.set(0, PANEL_HEIGHT + 0.3, 0);
+scene.add(panelLight);
 
 /* ---------------------------------------------------------------------
-   CONTROLES DE PRIMERA PERSONA (mouse/touch, sin Pointer Lock)
+   ILUMINACIÓN
 --------------------------------------------------------------------- */
-// el personaje principal comienza AFUERA del domo, frente a la puerta de acceso
+function addLight(x, z, color=0xffeedd, intensity=1.2) {
+    const light = new THREE.PointLight(color, intensity, 15, 2);
+    light.position.set(x, ROOM_HEIGHT - 0.5, z);
+    scene.add(light);
+    const bulbMat = new THREE.MeshBasicMaterial({ color: 0xfff5e6, transparent: true, opacity: 0.15 });
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), bulbMat);
+    bulb.position.copy(light.position);
+    scene.add(bulb);
+}
+
+addLight(-5, -5, 0xffeedd, 1.0);
+addLight(5, -5, 0xffeedd, 1.0);
+addLight(-5, 5, 0xffeedd, 1.0);
+addLight(5, 5, 0xffeedd, 1.0);
+addLight(0, 0, 0xfff5e6, 1.5);
+
+const ambientLight = new THREE.AmbientLight(0x8899aa, 0.5);
+scene.add(ambientLight);
+
+const dirLight = new THREE.DirectionalLight(0xfff0e0, 0.5);
+dirLight.position.set(2, 8, 4);
+scene.add(dirLight);
+
+/* ---------------------------------------------------------------------
+   CONTROLES
+--------------------------------------------------------------------- */
 const startDist = baseRadius + 4.5;
 camera.position.set(
   Math.sin(DOOR_AZIMUTH)*startDist,
   EYE_H,
   Math.cos(DOOR_AZIMUTH)*startDist
 );
-let yaw = -Math.PI/2, pitch = 0; // orientado hacia el centro/puerta del domo
+let yaw = -Math.PI/2, pitch = 0;
 const moveState = { fwd:0, strafe:0 };
 const keys = {};
 const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints>0;
@@ -815,7 +868,6 @@ function applyKeyboard(){
   moveState.fwd = f; moveState.strafe = s;
 }
 
-/* --- desktop: arrastrar con mouse para mirar --- */
 let dragging=false, lastX=0, lastY=0;
 renderer.domElement.addEventListener('mousedown', e=>{ dragging=true; lastX=e.clientX; lastY=e.clientY; });
 window.addEventListener('mouseup', ()=> dragging=false);
@@ -828,7 +880,6 @@ window.addEventListener('mousemove', e=>{
   pitch = Math.max(-1.3, Math.min(1.3, pitch));
 });
 
-/* --- movil: joysticks dinamicos en cada mitad de pantalla --- */
 const joyMoveEl = document.getElementById('joyMove');
 const joyLookEl = document.getElementById('joyLook');
 let moveTouchId=null, lookTouchId=null;
@@ -881,14 +932,9 @@ function endTouch(e){
 renderer.domElement.addEventListener('touchend', endTouch);
 renderer.domElement.addEventListener('touchcancel', endTouch);
 
-/* ---------------------------------------------------------------------
-   INTRO / ENTRADA
---------------------------------------------------------------------- */
-document.getElementById('enterBtn').addEventListener('click', ()=>{
-  document.getElementById('intro').style.display='none';
-  if(!isTouch) document.getElementById('crosshair').style.display='block';
-  else document.getElementById('touchZones').style.display='block';
-});
+// Activar controles directamente
+if(!isTouch) document.getElementById('crosshair').style.display = 'block';
+else document.getElementById('touchZones').style.display = 'block';
 
 /* ---------------------------------------------------------------------
    BUCLE DE ANIMACION
@@ -898,11 +944,13 @@ const SPEED = 1.6;
 const panelLabelEl = document.getElementById('panelLabel');
 const coordsOut = document.getElementById('coordsOut');
 const controlBtnEl = document.getElementById('controlBtn');
-controlBtnEl.addEventListener('click', cycleChimeraVariant);
+controlBtnEl.addEventListener('click', ()=>{
+  controlPanelMat.map = createControlPanelTexture();
+  controlPanelMat.needsUpdate = true;
+});
 
-// gama de color que recorren suavemente las lineas/tensores del domo
 const COLOR_CYCLE = [0xff2e2e, 0x33e07a, 0x3a7bff, 0xffe14d, 0xa347ff].map(c=>new THREE.Color(c));
-const CYCLE_SECONDS = 4.5; // duracion de cada transicion entre colores
+const CYCLE_SECONDS = 4.5;
 const cA = new THREE.Color(), cB = new THREE.Color(), cOut = new THREE.Color();
 
 function collide(current, desired){
@@ -911,16 +959,14 @@ function collide(current, desired){
   const desR = Math.hypot(desired.x, desired.z);
   const az = Math.atan2(desired.x, desired.z);
   const doorOpen = angleDelta(az, DOOR_AZIMUTH) < DOOR_HALF_WIDTH;
-
-  // si el movimiento cruza el muro del domo y no estamos en la puerta, se bloquea
-  const crossing = (curR - wallR) * (desR - wallR) < 0;
-  if(crossing && !doorOpen){
-    return current; // no atraviesa el muro
+  if((curR - wallR) * (desR - wallR) < 0 && !doorOpen){
+    return current;
   }
-  // limite exterior de la plaza
-  if(desR > OUTER_R - 0.6){
-    const k = (OUTER_R-0.6)/desR;
-    return new THREE.Vector3(desired.x*k, desired.y, desired.z*k);
+  const half = ROOM_HALF - 0.5;
+  if(Math.abs(desired.x) > half || Math.abs(desired.z) > half) {
+      const clampedX = Math.max(-half, Math.min(half, desired.x));
+      const clampedZ = Math.max(-half, Math.min(half, desired.z));
+      return new THREE.Vector3(clampedX, desired.y, clampedZ);
   }
   return desired;
 }
@@ -952,23 +998,18 @@ function animate(){
 
   const insideDome = Math.hypot(camera.position.x,camera.position.z) < domeRadiusAt(EYE_H);
   const camAz = Math.atan2(camera.position.x, camera.position.z);
-  const distFromCenter = Math.hypot(camera.position.x, camera.position.z);
 
-  // etiqueta segun contexto: seccion de la pantalla curva o panel de control
   let labelText = '';
-  const distToControl = camera.position.distanceTo(controlPanelMesh.position);
-  if(insideDome && distToControl < 1.35){
-    labelText = controlPanelMesh.userData.label;
+  if(insideDome){
+    labelText = 'INTERIOR DEL DOMO · Pantalla curva · Panel de control';
     controlBtnEl.classList.add('visible');
   } else {
     controlBtnEl.classList.remove('visible');
-    if(insideDome && distFromCenter > CURVED_SCREEN_R*0.5){
-      let best=null, bestDelta=0.5;
-      curvedSections.forEach(s=>{
-        const d = angleDelta(camAz, s.az);
-        if(d<bestDelta){ bestDelta=d; best=s; }
-      });
-      if(best) labelText = best.label;
+    const distToChimera = camera.position.distanceTo(chimeraGroup.position);
+    if(distToChimera < 3.0){
+      labelText = '✦ QUIMERA FLOTANTE · Realidad Aumentada ✦';
+    } else {
+      labelText = 'EXPLANADA · Espacio blanco · Domo geodésico';
     }
   }
   if(labelText){
@@ -978,13 +1019,43 @@ function animate(){
     panelLabelEl.style.opacity = 0;
   }
 
-  coordsOut.textContent = (insideDome?'interior':'exterior') +
+  coordsOut.textContent = (insideDome?'INTERIOR':'EXTERIOR') +
     `  ·  x ${camera.position.x.toFixed(1)}   z ${camera.position.z.toFixed(1)}`;
 
-  // pulso sutil de la luz del oculo
-  domeTopLight.intensity = 0.55 + Math.sin(t*0.7)*0.08;
+  // Animación quimera
+  chimeraGroup.position.y = 1.5 + Math.sin(t * 0.5) * 0.5;
+  chimeraGroup.rotation.y = t * 0.2;
+  chimeraGroup.rotation.x = Math.sin(t * 0.3) * 0.1;
 
-  // ciclo de color suave de las lineas del domo: rojo -> verde -> azul -> amarillo -> morado
+  particles.rotation.y = t * 0.15;
+
+  torusKnot.rotation.x = t * 0.3;
+  torusKnot.rotation.z = t * 0.2;
+  torusKnot.scale.setScalar(1 + Math.sin(t * 0.4) * 0.05);
+
+  const rings = chimeraGroup.children.filter(c => c.type === 'Mesh' && c.geometry.type === 'TorusGeometry');
+  rings.forEach((ring, i) => {
+    ring.rotation.z = t * (0.2 + i * 0.1) + i * 0.5;
+    ring.rotation.x = Math.PI / 3 + Math.sin(t * 0.2 + i) * 0.2;
+    ring.scale.setScalar(1 + Math.sin(t * 0.3 + i * 0.5) * 0.05);
+    ring.material.opacity = 0.15 + Math.sin(t * 0.5 + i) * 0.08;
+  });
+
+  // Nodos en movimiento
+  floorTravelers.forEach(d=>{
+    const u = d.userData;
+    const travel = u.offset + 0.3 * (0.5 + 0.5 * Math.sin(t * u.speed + u.phase));
+    const r = u.lenWorld * travel;
+    d.position.x = Math.sin(u.az) * r;
+    d.position.z = Math.cos(u.az) * r;
+    d.scale.setScalar(0.8 + 0.3 * Math.sin(t * 1.5 + u.phase));
+    d.material.opacity = 0.5 + 0.4 * Math.sin(t * 1.2 + u.phase * 0.5);
+  });
+
+  lineMesh.rotation.y = t * 0.02;
+  lineMesh2.rotation.y = -t * 0.015;
+
+  // Color interior del domo
   const n = COLOR_CYCLE.length;
   const phase = (t / CYCLE_SECONDS) % n;
   const idx = Math.floor(phase);
@@ -995,14 +1066,13 @@ function animate(){
   innerGlowMat.emissive.copy(cOut);
   interiorMoodLight.color.copy(cOut);
 
-  // nodos de color en movimiento sobre el piso
-  floorTravelers.forEach(d=>{
-    const u = d.userData;
-    const travel = 0.15 + 0.8*(0.5+0.5*Math.sin(t*u.speed + u.phase));
-    d.position.x = Math.sin(u.az)*u.lenWorld*travel;
-    d.position.z = Math.cos(u.az)*u.lenWorld*travel;
-    d.scale.setScalar(0.8+0.3*Math.sin(t*2+u.phase));
-  });
+  // Actualizar panel
+  if(Math.floor(t * 2) % 2 === 0){
+    controlPanelMat.map = createControlPanelTexture();
+    controlPanelMat.needsUpdate = true;
+  }
+
+  domeTopLight.intensity = 0.55 + Math.sin(t*0.7)*0.08;
 
   renderer.render(scene, camera);
 }
