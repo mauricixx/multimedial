@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>QUIMERAS — Domo Interactivo / Metro de Santiago</title>
+<style>
+  :root{
+    --cyan:#5ff7e0;
+    --magenta:#ff3d8a;
+    --amber:#ffcf5c;
+    --ink:#060709;
+    --paper:#e9f4f1;
+  }
+  html,body{
+    margin:0; padding:0; width:100%; height:100%;
+    background:var(--ink); overflow:hidden;
+    font-family: 'Courier New', ui-monospace, monospace;
+    -webkit-user-select:none; user-select:none;
+    touch-action:none;
+  }
+  canvas{ display:block; }
+
+  #hud{
+    position:fixed; top:0; left:0; right:0;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    padding:14px 16px; pointer-events:none; z-index:5;
+  }
+  #hud .brand{
+    color:var(--cyan); font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; line-height:1.6;
+    text-shadow:0 0 8px rgba(95,247,224,.5);
+  }
+  #hud .brand small{ color:#6c7a82; display:block; letter-spacing:.08em; }
+  #hud .coords{
+    color:#5a6b70; font-size:10px; letter-spacing:.05em; text-align:right;
+  }
+
+  #crosshair{
+    position:fixed; top:50%; left:50%; width:6px; height:6px;
+    margin:-3px 0 0 -3px; border-radius:50%;
+    border:1px solid rgba(95,247,224,.65); z-index:5; pointer-events:none;
+    box-shadow:0 0 6px rgba(95,247,224,.4);
+    display:none;
+  }
+
+  #intro{
+    position:fixed; inset:0; z-index:20; background:var(--ink);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:32px; box-sizing:border-box;
+    background:
+      radial-gradient(circle at 50% 40%, rgba(95,247,224,.08), transparent 60%),
+      var(--ink);
+  }
+  #intro .eyebrow{
+    color:var(--magenta); font-size:11px; letter-spacing:.3em; text-transform:uppercase;
+    margin-bottom:14px;
+  }
+  #intro h1{
+    color:var(--paper); font-size:clamp(22px,6vw,34px); font-weight:400;
+    letter-spacing:.02em; margin:0 0 10px 0; line-height:1.25;
+  }
+  #intro h1 em{ color:var(--cyan); font-style:normal; }
+  #intro p{
+    color:#8a9aa0; font-size:13px; line-height:1.7; max-width:420px; margin:0 0 28px 0;
+  }
+  #enterBtn{
+    background:transparent; border:1px solid var(--cyan); color:var(--cyan);
+    padding:13px 30px; font-size:12px; letter-spacing:.2em; text-transform:uppercase;
+    font-family:inherit; cursor:pointer; border-radius:2px;
+    transition:background .2s, color .2s;
+  }
+  #enterBtn:active{ background:var(--cyan); color:#04100e; }
+  #intro .hint{
+    margin-top:18px; color:#4a565a; font-size:10px; letter-spacing:.1em;
+  }
+
+  #joyMove, #joyLook{
+    position:fixed; width:96px; height:96px; border-radius:50%;
+    border:1px solid rgba(95,247,224,.35); background:rgba(95,247,224,.04);
+    z-index:8; display:none; pointer-events:none;
+  }
+  #joyMove .knob, #joyLook .knob{
+    position:absolute; width:40px; height:40px; border-radius:50%;
+    left:28px; top:28px; background:rgba(95,247,224,.25);
+    border:1px solid rgba(95,247,224,.7);
+  }
+
+  #touchZones{ position:fixed; inset:0; z-index:6; display:none; }
+  #touchZones div{ position:absolute; top:0; bottom:0; width:50%; }
+  #zoneL{ left:0; } #zoneR{ right:0; }
+
+  #panelLabel{
+    position:fixed; bottom:16px; left:0; right:0; text-align:center;
+    color:#5a6b70; font-size:10px; letter-spacing:.15em; z-index:5;
+    pointer-events:none; text-transform:uppercase; opacity:0; transition:opacity .4s;
+  }
+
+  #controlBtn{
+    position:fixed; bottom:56px; left:50%; transform:translateX(-50%);
+    background:rgba(95,247,224,.12); border:1px solid var(--cyan); color:var(--cyan);
+    padding:10px 20px; font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+    font-family:inherit; border-radius:2px; z-index:9; opacity:0; pointer-events:none;
+    transition:opacity .3s; display:flex; align-items:center; gap:8px;
+  }
+  #controlBtn.visible{ opacity:1; pointer-events:auto; }
+</style>
+</head>
+<body>
+
+<div id="intro">
+  <div class="eyebrow">Investigación-creación · Metro de Santiago</div>
+  <h1>QUIMERAS: <em>Arte &amp; Patrimonio</em><br>Domo geodésico interactivo</h1>
+  <p>Una cúpula geodésica de 5 metros de altura, con piel blanca parcialmente
+     cubierta —dejando aberturas hacia el interior— cambia de color solo por
+     dentro. Adentro, una pantalla curva reúne tres secciones de una obra
+     interactiva concebida para la red del Metro de Santiago, y un panel
+     táctil central permite cambiar la variante de la Quimera exhibida. El
+     recorrido comienza afuera, de día, en la explanada de la estación:
+     puedes caminar alrededor del domo y entrar por su vano de acceso.</p>
+  <button id="enterBtn">Comenzar recorrido</button>
+  <div class="hint">Escritorio: arrastrar para mirar · WASD para moverse<br>Móvil: lado izquierdo mover · lado derecho mirar</div>
+</div>
+
+<div id="hud">
+  <div class="brand">QUIMERAS<small>domo · sesión 01</small></div>
+  <div class="coords" id="coordsOut">x 0.0 &nbsp; z 0.0</div>
+</div>
+<div id="crosshair"></div>
+<div id="panelLabel"></div>
+<button id="controlBtn">Tocar panel · cambiar Quimera</button>
+
+<div id="touchZones"><div id="zoneL"></div><div id="zoneR"></div></div>
+<div id="joyMove"><div class="knob"></div></div>
+<div id="joyLook"><div class="knob"></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+
+/* ---------------------------------------------------------------------
+   ESCENA BASE
+--------------------------------------------------------------------- */
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xa9cbe0);
+scene.fog = new THREE.FogExp2(0xc4dcea, 0.012);
+
+const camera = new THREE.PerspectiveCamera(62, window.innerWidth/window.innerHeight, 0.05, 140);
+const EYE_H = 1.62;
+
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputEncoding = THREE.sRGBEncoding;
+document.body.appendChild(renderer.domElement);
+
+/* ---------------------------------------------------------------------
+   PARAMETROS DEL DOMO
+   Cupula "mas que hemisferica" (tipo 5/8 de esfera): la esfera generadora
+   se corta por debajo del ecuador, por lo que el domo se abomba mas alla
+   de su base antes de cerrarse en la cima -> altura real de 5 m.
+--------------------------------------------------------------------- */
+const SPHERE_R = 3.6;        // radio de la esfera generadora
+const CAP_BOTTOM_LOCAL = -1.4; // corte local (negativo = bajo el ecuador -> mas que hemisferio)
+const DETAIL = 3;            // frecuencia de subdivision geodesica (3V)
+const translateY = -CAP_BOTTOM_LOCAL;               // desplazamiento para que la base quede en y=0
+const DOME_HEIGHT = SPHERE_R - CAP_BOTTOM_LOCAL;    // = 5.0 m
+const baseRadius = Math.sqrt(SPHERE_R*SPHERE_R - CAP_BOTTOM_LOCAL*CAP_BOTTOM_LOCAL); // radio de la base
+const OUTER_R = SPHERE_R*2;  // radio de la explanada: el espacio total (2*OUTER_R) es el doble del diametro del domo (2*SPHERE_R)
+
+// puerta de acceso: hueco angular en la estructura para entrar y salir
+const DOOR_AZIMUTH = Math.PI*1.5;   // orientacion de la puerta
+const DOOR_HALF_WIDTH = 0.30;       // ancho angular medio (rad)
+const DOOR_TOP_H = 3.4;             // altura del vano (mas alta)
+
+function domeRadiusAt(y){
+  const localY = y - translateY;
+  const v = SPHERE_R*SPHERE_R - localY*localY;
+  return v>0 ? Math.sqrt(v) : 0;
+}
+function angleDelta(a,b){
+  let d = a-b;
+  while(d> Math.PI) d-=Math.PI*2;
+  while(d<-Math.PI) d+=Math.PI*2;
+  return Math.abs(d);
+}
+function inDoorway(x,z,y){
+  const az = Math.atan2(x,z);
+  return angleDelta(az,DOOR_AZIMUTH) < DOOR_HALF_WIDTH && y < DOOR_TOP_H;
+}
+
+// arco que ocupa la pantalla curva interior (evitamos aberturas justo detras de ella)
+const SCREEN_AZ_START = Math.PI*0.12, SCREEN_AZ_END = Math.PI*0.98;
+const SCREEN_AZ_CENTER = (SCREEN_AZ_START+SCREEN_AZ_END)/2;
+const SCREEN_AZ_HALF = (SCREEN_AZ_END-SCREEN_AZ_START)/2 + 0.12;
+
+/* ---------------------------------------------------------------------
+   SUELO
+--------------------------------------------------------------------- */
+function buildFloorTexture(){
+  const size = 1536;
+  const cv = document.createElement('canvas'); cv.width = cv.height = size;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#050607'; ctx.fillRect(0,0,size,size);
+
+  const cx = size/2, cy = size/2;
+  const px = size/2;                                  // px por unidad de OUTER_R
+  const interiorPxR = px * (baseRadius/OUTER_R);       // radio interior del domo en pixeles
+
+  // pavimento de la explanada: base clara tipo concreto + juntas en grilla
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx,cy,px*0.995,0,Math.PI*2); ctx.clip();
+  ctx.fillStyle = '#9aa3a6'; ctx.fillRect(0,0,size,size);
+  const gGrad = ctx.createRadialGradient(cx,cy,interiorPxR,cx,cy,px);
+  gGrad.addColorStop(0,'rgba(120,128,131,0.9)'); gGrad.addColorStop(1,'rgba(150,158,160,0.55)');
+  ctx.fillStyle = gGrad; ctx.fillRect(0,0,size,size);
+  ctx.strokeStyle = 'rgba(60,66,68,0.35)'; ctx.lineWidth = 2;
+  const joint = 46;
+  for(let x=0;x<size;x+=joint){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,size); ctx.stroke(); }
+  for(let y=0;y<size;y+=joint){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(size,y); ctx.stroke(); }
+  ctx.restore();
+
+  // anillos guía sutiles alrededor del domo
+  ctx.strokeStyle = 'rgba(30,40,42,0.18)'; ctx.lineWidth = 1;
+  for(let r=interiorPxR+50; r<px; r+=70){ ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke(); }
+
+  // sendero de acceso alineado a la puerta (DOOR_AZIMUTH), dibujado en coordenadas (x,z)->(u,v)
+  const doorDX = Math.sin(DOOR_AZIMUTH), doorDZ = Math.cos(DOOR_AZIMUTH);
+  ctx.save();
+  ctx.strokeStyle = 'rgba(95,247,224,0.32)'; ctx.lineWidth = 46; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(cx + doorDX*interiorPxR*0.9, cy + doorDZ*interiorPxR*0.9);
+  ctx.lineTo(cx + doorDX*px*0.98, cy + doorDZ*px*0.98);
+  ctx.stroke();
+  ctx.restore();
+
+  // circulo interior (huella del domo) con la red nodal
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx,cy,interiorPxR,0,Math.PI*2); ctx.clip();
+  ctx.fillStyle = '#07090a'; ctx.fillRect(cx-interiorPxR,cy-interiorPxR,interiorPxR*2,interiorPxR*2);
+  ctx.strokeStyle = 'rgba(95,247,224,0.08)'; ctx.lineWidth = 1;
+  for(let r=interiorPxR*0.18;r<interiorPxR;r+=interiorPxR*0.16){ ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke(); }
+
+  const nodes = [];
+  const nLines = 6;
+  for(let i=0;i<nLines;i++){
+    const a = (i/nLines)*Math.PI*2 + 0.3;
+    const len = interiorPxR*(0.55+Math.random()*0.35);
+    const x2 = cx + Math.cos(a)*len, y2 = cy + Math.sin(a)*len;
+    ctx.strokeStyle = i%2===0 ? 'rgba(95,247,224,0.22)' : 'rgba(255,61,138,0.16)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(x2,y2); ctx.stroke();
+    nodes.push([x2,y2, i%2===0?'#5ff7e0':'#ff3d8a']);
+  }
+  nodes.forEach(([x,y,c])=>{
+    ctx.fillStyle = c; ctx.globalAlpha = 0.5;
+    ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+  ctx.fillStyle = 'rgba(95,247,224,0.6)';
+  ctx.beginPath(); ctx.arc(cx,cy,5,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  ctx.strokeStyle='rgba(95,247,224,0.35)'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(cx,cy,interiorPxR,0,Math.PI*2); ctx.stroke();
+
+  const tex = new THREE.CanvasTexture(cv);
+  tex.encoding = THREE.sRGBEncoding;
+  return tex;
+}
+
+const floorGeo = new THREE.CircleGeometry(OUTER_R, 96);
+const floorMat = new THREE.MeshStandardMaterial({
+  map: buildFloorTexture(), color: 0xffffff, roughness:0.9, metalness:0.03
+});
+const floor = new THREE.Mesh(floorGeo, floorMat);
+floor.rotation.x = -Math.PI/2;
+scene.add(floor);
+
+/* --- nodos de color en movimiento sobre el piso interior -------------
+   Pequeños puntos emisivos que recorren de ida y vuelta las mismas
+   lineas nodales dibujadas en el piso, dando sensacion de flujo de datos. --- */
+const FLOOR_LINE_DEFS = [
+  {az:0.30, len:0.62, color:0x5ff7e0},
+  {az:1.35, len:0.78, color:0xff3d8a},
+  {az:2.39, len:0.58, color:0x5ff7e0},
+  {az:3.44, len:0.83, color:0xff3d8a},
+  {az:4.49, len:0.66, color:0x5ff7e0},
+  {az:5.53, len:0.73, color:0xff3d8a},
+];
+const floorTravelers = [];
+FLOOR_LINE_DEFS.forEach((L,i)=>{
+  const lenWorld = baseRadius*L.len;
+  for(let k=0;k<2;k++){
+    const dot = new THREE.Mesh(
+      new THREE.CircleGeometry(0.055,14),
+      new THREE.MeshBasicMaterial({ color:L.color, transparent:true, opacity:0.85, blending:THREE.AdditiveBlending, depthWrite:false })
+    );
+    dot.rotation.x = -Math.PI/2;
+    dot.position.y = 0.015;
+    dot.userData = { az:L.az, lenWorld, speed:0.32+0.11*k, phase:i*1.7+k*3.1 };
+    scene.add(dot);
+    floorTravelers.push(dot);
+  }
+});
+
+/* ---------------------------------------------------------------------
+   CONTEXTO URBANO: cielo diurno + edificios lejanos
+   (la explanada representa un entorno exterior del Metro de Santiago)
+--------------------------------------------------------------------- */
+function buildSkyTexture(){
+  const w=16, h=512;
+  const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+  const ctx=cv.getContext('2d');
+  const g=ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0,'#3f83c4');
+  g.addColorStop(0.45,'#7fb3dc');
+  g.addColorStop(0.75,'#cfe6ef');
+  g.addColorStop(1,'#e9ece2');
+  ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+  const tex=new THREE.CanvasTexture(cv);
+  tex.encoding = THREE.sRGBEncoding;
+  return tex;
+}
+const sky = new THREE.Mesh(
+  new THREE.SphereGeometry(OUTER_R*3.2, 24, 16),
+  new THREE.MeshBasicMaterial({ map:buildSkyTexture(), side:THREE.BackSide, fog:false })
+);
+scene.add(sky);
+
+// siluetas de edificios lejanos, mas alla del borde de la explanada (tonos claros de dia)
+function buildingSilhouette(w,h,d,x,z,color){
+  const m = new THREE.Mesh(
+    new THREE.BoxGeometry(w,h,d),
+    new THREE.MeshStandardMaterial({ color, roughness:0.85, metalness:0.05 })
+  );
+  m.position.set(x, h/2, z);
+  scene.add(m);
+}
+const cityR = OUTER_R + 14;
+const buildingTones = [0x9aa4ab, 0xb3bcc0, 0x8b969c, 0xc2c8c2];
+for(let i=0;i<10;i++){
+  const a = (i/10)*Math.PI*2 + 0.15;
+  const w = 3+Math.random()*4, d = 3+Math.random()*4, h = 5+Math.random()*16;
+  buildingSilhouette(w,h,d, Math.sin(a)*cityR, Math.cos(a)*cityR, buildingTones[i%buildingTones.length]);
+}
+
+/* ---------------------------------------------------------------------
+   ESTRUCTURA GEODESICA (paneles + tensores)
+--------------------------------------------------------------------- */
+const domeGroup = new THREE.Group();
+scene.add(domeGroup);
+
+const ico = new THREE.IcosahedronGeometry(SPHERE_R, DETAIL);
+ico.translate(0, translateY, 0); // recortar bajo el ecuador y apoyar la base en y=0
+
+const pos = ico.attributes.position;
+const panelVerts = [];
+const edgeMap = new Map();
+
+function keyFor(v){
+  return v.x.toFixed(3)+','+v.y.toFixed(3)+','+v.z.toFixed(3);
+}
+function addEdge(a,b){
+  const k = keyFor(a) < keyFor(b) ? keyFor(a)+'|'+keyFor(b) : keyFor(b)+'|'+keyFor(a);
+  if(!edgeMap.has(k)) edgeMap.set(k, [a.clone(), b.clone()]);
+}
+
+const v0 = new THREE.Vector3(), v1 = new THREE.Vector3(), v2 = new THREE.Vector3();
+const openTriCentroid = new THREE.Vector3();
+let triIndex = 0;
+for(let i=0;i<pos.count;i+=3){
+  v0.fromBufferAttribute(pos,i);
+  v1.fromBufferAttribute(pos,i+1);
+  v2.fromBufferAttribute(pos,i+2);
+  const cy = (v0.y+v1.y+v2.y)/3;
+  const inDoor = inDoorway(v0.x,v0.z,v0.y) && inDoorway(v1.x,v1.z,v1.y) && inDoorway(v2.x,v2.z,v2.y);
+  if(cy > 0.03 && !inDoor){ // conservar la cupula, dejando el vano de la puerta abierto
+    addEdge(v0,v1); addEdge(v1,v2); addEdge(v2,v0); // la estructura (tensores) se conserva siempre
+
+    openTriCentroid.set((v0.x+v1.x+v2.x)/3, cy, (v0.z+v1.z+v2.z)/3);
+    const triAz = Math.atan2(openTriCentroid.x, openTriCentroid.z);
+    const nearDoor = angleDelta(triAz, DOOR_AZIMUTH) < DOOR_HALF_WIDTH + 0.22;
+    const nearScreenWall = angleDelta(triAz, SCREEN_AZ_CENTER) < SCREEN_AZ_HALF;
+    // pseudo-aleatorio estable (sin Math.random) para decidir que paneles quedan sin cobertura
+    const hash = Math.abs(Math.sin(triIndex*12.9898)*43758.5453) % 1;
+    const isOpenGap = hash < 0.16 && cy > 1.0 && cy < DOME_HEIGHT*0.88 &&
+                       !nearDoor && !nearScreenWall;
+    if(!isOpenGap){
+      panelVerts.push(v0.x,v0.y,v0.z, v1.x,v1.y,v1.z, v2.x,v2.y,v2.z);
+    }
+  }
+  triIndex++;
+}
+
+// piel exterior: opaca y "cubierta" (no deja ver el interior ni su color)
+const panelGeo = new THREE.BufferGeometry();
+panelGeo.setAttribute('position', new THREE.Float32BufferAttribute(panelVerts,3));
+panelGeo.computeVertexNormals();
+const panelMat = new THREE.MeshStandardMaterial({
+  color: 0xf1f1ee, roughness:0.65, metalness:0.06, side: THREE.DoubleSide
+});
+domeGroup.add(new THREE.Mesh(panelGeo, panelMat));
+
+// tensores / estructura visible desde fuera y desde dentro: blancos, NO se animan, y mas delgados
+const strutMat = new THREE.MeshStandardMaterial({
+  color:0xf5f5f2, roughness:0.5, metalness:0.15
+});
+const strutRadius = 0.012;
+const cyl = new THREE.CylinderGeometry(strutRadius, strutRadius, 1, 6, 1);
+const strutMesh = new THREE.InstancedMesh(cyl, strutMat, edgeMap.size);
+let si = 0;
+const tmpObj = new THREE.Object3D();
+edgeMap.forEach(([a,b])=>{
+  const mid = a.clone().add(b).multiplyScalar(0.5);
+  const dir = b.clone().sub(a);
+  const len = dir.length();
+  tmpObj.position.copy(mid);
+  tmpObj.scale.set(1,len,1);
+  const axis = new THREE.Vector3(0,1,0);
+  const quat = new THREE.Quaternion().setFromUnitVectors(axis, dir.clone().normalize());
+  tmpObj.quaternion.copy(quat);
+  tmpObj.updateMatrix();
+  strutMesh.setMatrixAt(si++, tmpObj.matrix);
+});
+domeGroup.add(strutMesh);
+
+/* --- capa interior que cambia de color -------------------------------
+   Un segundo set de tubos, mas delgado y desplazado hacia el centro de
+   la cupula, sigue las mismas aristas pero queda por dentro de la piel
+   opaca: solo es visible desde el interior, nunca desde afuera. --- */
+const sphereCenterVec = new THREE.Vector3(0, translateY, 0);
+const innerGlowMat = new THREE.MeshStandardMaterial({
+  color:0x030405, emissive:0xff2e2e, emissiveIntensity:1.3, roughness:0.5, metalness:0.2
+});
+const INNER_OFFSET = 0.045; // separacion respecto de la piel exterior
+const innerRadius = 0.016;
+const cylInner = new THREE.CylinderGeometry(innerRadius, innerRadius, 1, 6, 1);
+const innerGlowMesh = new THREE.InstancedMesh(cylInner, innerGlowMat, edgeMap.size);
+let gi = 0;
+const tmpIn = new THREE.Object3D();
+function pullInward(v, amount){
+  const dir = sphereCenterVec.clone().sub(v).normalize();
+  return v.clone().addScaledVector(dir, amount);
+}
+edgeMap.forEach(([a,b])=>{
+  const ai = pullInward(a, INNER_OFFSET);
+  const bi = pullInward(b, INNER_OFFSET);
+  const mid = ai.clone().add(bi).multiplyScalar(0.5);
+  const dir = bi.clone().sub(ai);
+  const len = dir.length();
+  tmpIn.position.copy(mid);
+  tmpIn.scale.set(1,len,1);
+  const axis = new THREE.Vector3(0,1,0);
+  const quat = new THREE.Quaternion().setFromUnitVectors(axis, dir.clone().normalize());
+  tmpIn.quaternion.copy(quat);
+  tmpIn.updateMatrix();
+  innerGlowMesh.setMatrixAt(gi++, tmpIn.matrix);
+});
+domeGroup.add(innerGlowMesh);
+
+// luz ambiental interior que acompaña el cambio de color (solo alcanza el interior)
+const interiorMoodLight = new THREE.PointLight(0xff2e2e, 0.45, 5, 2);
+interiorMoodLight.position.set(0, 2.0, 0);
+scene.add(interiorMoodLight);
+
+/* oculo superior: se omite el casquete y se agrega un haz de luz */
+const domeTopLight = new THREE.PointLight(0xfff0d0, 0.55, 10, 2);
+domeTopLight.position.set(0, DOME_HEIGHT*0.98, 0);
+scene.add(domeTopLight);
+
+const beamGeo = new THREE.CylinderGeometry(0.06, 1.1, DOME_HEIGHT*1.5, 24, 1, true);
+const beamMat = new THREE.MeshBasicMaterial({
+  color:0xfff0d0, transparent:true, opacity:0.05, side:THREE.DoubleSide, depthWrite:false
+});
+const beam = new THREE.Mesh(beamGeo, beamMat);
+beam.position.set(0, DOME_HEIGHT*0.7, 0);
+scene.add(beam);
+
+/* (PROYECCION EXTERIOR DE QUIMERA se define mas abajo, luego de drawChimera) */
+
+/* ---------------------------------------------------------------------
+   ILUMINACION GENERAL
+--------------------------------------------------------------------- */
+scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+const hemi = new THREE.HemisphereLight(0xbfe0ff, 0x9a9484, 0.85);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff4e0, 1.0);
+sun.position.set(OUTER_R*0.6, OUTER_R*1.1, OUTER_R*0.35);
+scene.add(sun);
+
+/* ---------------------------------------------------------------------
+   PANTALLAS (contenido de la obra sobre el Metro de Santiago)
+--------------------------------------------------------------------- */
+function makeScreenCanvas(drawFn, w=1024, h=640){
+  const cv = document.createElement('canvas'); cv.width=w; cv.height=h;
+  const ctx = cv.getContext('2d');
+  drawFn(ctx,w,h);
+  const tex = new THREE.CanvasTexture(cv);
+  tex.encoding = THREE.sRGBEncoding;
+  tex.anisotropy = 4;
+  return tex;
+}
+
+function panelBase(ctx,w,h){
+  ctx.fillStyle = '#050708'; ctx.fillRect(0,0,w,h);
+  const g = ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0,'rgba(95,247,224,0.05)'); g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+}
+function eyebrow(ctx,text,x,y,color){
+  ctx.fillStyle=color; ctx.font='600 15px monospace';
+  ctx.textBaseline='alphabetic';
+  let spaced=''; for(const c of text) spaced+=c+String.fromCharCode(8202)+String.fromCharCode(8202);
+  ctx.fillText(spaced,x,y);
+}
+
+// -- Sección 1: los tres nodos de interacción del proyecto
+function drawNodesSection(ctx,w,h){
+  panelBase(ctx,w,h);
+  eyebrow(ctx,'MEDIACIÓN DISTRIBUIDA', 48, 64, '#5ff7e0');
+  ctx.fillStyle='#e9f4f1'; ctx.font='300 32px monospace';
+  ctx.fillText('Tres nodos de', 48, 108);
+  ctx.fillText('interacción', 48, 144);
+
+  const nodes = [
+    { t:'01 · CELULAR', c:'#5ff7e0', d:['"Not QR": encuentra, activa y descubre','en vez de escanear pasivamente.'] },
+    { t:'02 · PANTALLAS Y AUDIO', c:'#ff3d8a', d:['Palabras clave como puertas de entrada:','memoria, territorio, cuerpo, identidad.'] },
+    { t:'03 · PUNTOS SENSIBLES', c:'#ffcf5c', d:['El cuerpo como interfaz: presencia,','distancia y movimiento activan la obra.'] },
+  ];
+  const top=190, rowH=(h-top-70)/3;
+  nodes.forEach((n,i)=>{
+    const y = top + i*rowH;
+    ctx.fillStyle = n.c; ctx.globalAlpha=0.12;
+    ctx.fillRect(48, y, w-96, rowH-18);
+    ctx.globalAlpha=1;
+    ctx.strokeStyle = n.c; ctx.lineWidth=2;
+    ctx.strokeRect(48, y, w-96, rowH-18);
+    ctx.fillStyle = n.c; ctx.font='600 17px monospace';
+    ctx.fillText(n.t, 68, y+34);
+    ctx.fillStyle = '#c7d3d5'; ctx.font='14px monospace';
+    n.d.forEach((line,li)=> ctx.fillText(line, 68, y+60+li*22));
+    if(i<nodes.length-1){
+      ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(w/2, y+rowH-18); ctx.lineTo(w/2, y+rowH); ctx.stroke();
+    }
+  });
+
+  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.beginPath();
+  ctx.moveTo(48,h-46); ctx.lineTo(w-48,h-46); ctx.stroke();
+  ctx.fillStyle='#5a6b70'; ctx.font='11px monospace';
+  ctx.fillText('RED DE EXPERIENCIAS SENSIBLES · ARTE, PATRIMONIO E INTERACTIVIDAD', 48, h-24);
+}
+
+// -- Sección 2: generador de quimeras (Obra A + Obra B + usuario + IA)
+const CHIMERA_PALETTES = [
+  ['#5ff7e0','#ff3d8a','#ffcf5c'],
+  ['#ff3d8a','#a347ff','#5ff7e0'],
+  ['#ffcf5c','#33e07a','#3a7bff'],
+];
+function drawChimera(ctx,w,h,paletteIndex=0){
+  panelBase(ctx,w,h);
+  eyebrow(ctx,'GENERADOR QUIMERA', 48, 64, '#ff3d8a');
+  ctx.fillStyle='#e9f4f1'; ctx.font='300 30px monospace';
+  ctx.fillText('Obra A + Obra B', 48, 108);
+  ctx.fillStyle='#7d8d92'; ctx.font='14px monospace';
+  ctx.fillText('+ intervención del usuario + IA = QUIMERA', 48, 134);
+
+  const gx=4, gy=3, pad=48, top=170;
+  const cw=(w-pad*2)/gx, ch=(h-top-40)/gy;
+  const palette = CHIMERA_PALETTES[paletteIndex % CHIMERA_PALETTES.length];
+  let idx=0;
+  for(let j=0;j<gy;j++){
+    for(let i=0;i<gx;i++){
+      const x=pad+i*cw, y=top+j*ch;
+      const c1=palette[idx%3], c2=palette[(idx+1)%3];
+      const g=ctx.createLinearGradient(x,y,x+cw,y+ch);
+      g.addColorStop(0, c1+'22'); g.addColorStop(1, c2+'11');
+      ctx.fillStyle=g; ctx.fillRect(x+3,y+3,cw-6,ch-6);
+      ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.strokeRect(x+3,y+3,cw-6,ch-6);
+      // trama tipo cross-hatch, referencia al filtro de lápiz
+      ctx.strokeStyle=c1+'55'; ctx.lineWidth=1;
+      for(let l=-ch;l<cw;l+=9){
+        ctx.beginPath(); ctx.moveTo(x+l,y+ch-6); ctx.lineTo(x+l+ch,y+6); ctx.stroke();
+      }
+      idx++;
+    }
+  }
+  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.beginPath();
+  ctx.moveTo(48,h-46); ctx.lineTo(w-48,h-46); ctx.stroke();
+  ctx.fillStyle='#5a6b70'; ctx.font='11px monospace';
+  ctx.fillText('ARTISTA + PATRIMONIO + TRANSEÚNTE + IA → QUIMERA', 48, h-24);
+}
+
+// -- Sección 3: modelo de experiencia / manifiesto del proyecto
+function drawConceptSection(ctx,w,h){
+  panelBase(ctx,w,h);
+  eyebrow(ctx,'MODELO DE EXPERIENCIA', 48, 64, '#ffcf5c');
+  ctx.fillStyle='#e9f4f1'; ctx.font='300 28px monospace';
+  ctx.fillText('¿Cómo recorremos', 48, 106);
+  ctx.fillText('el Metro?', 48, 140);
+
+  const steps = ['ORIGEN','DESCUBRIMIENTO','INTERACCIÓN','DESPLAZAMIENTO','NUEVA OBRA'];
+  const sy = 186, sx = 48;
+  ctx.font='12px monospace';
+  let cx = sx;
+  steps.forEach((s,i)=>{
+    ctx.fillStyle = i%2===0 ? '#5ff7e0' : '#ff3d8a';
+    const tw = ctx.measureText(s).width + 18;
+    ctx.globalAlpha=0.15; ctx.fillRect(cx, sy-16, tw, 24); ctx.globalAlpha=1;
+    ctx.fillText(s, cx+9, sy);
+    cx += tw;
+    if(i<steps.length-1){
+      ctx.fillStyle='#5a6b70'; ctx.fillText('→', cx+2, sy);
+      cx += 20;
+    }
+  });
+
+  const lines = [
+    'La estación deja de ser un punto de paso y se',
+    'convierte en un punto de atención, juego,',
+    'memoria y producción de significado.',
+    ' ',
+    'Dos obras en estaciones distintas pueden generar',
+    'una tercera: el desplazamiento físico entre ellas',
+    'es parte del proceso creativo.',
+  ];
+  ctx.fillStyle='#b9c6c9'; ctx.font='15px monospace';
+  let y=246;
+  lines.forEach(l=>{ ctx.fillText(l,48,y); y+=27; });
+
+  ctx.fillStyle='#ffcf5c'; ctx.font='italic 16px monospace';
+  ctx.fillText('"El viaje es parte de la obra."', 48, y+14);
+
+  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.beginPath();
+  ctx.moveTo(48,h-46); ctx.lineTo(w-48,h-46); ctx.stroke();
+  ctx.fillStyle='#5a6b70'; ctx.font='11px monospace';
+  ctx.fillText('QUIMERAS: ARTE & PATRIMONIO · FAC. DE ARTES Y FAC. DE INGENIERÍA', 48, h-24);
+}
+
+/* --- pantalla curva unica, con las tres secciones ---------------------
+   Reemplaza las tres pantallas planas por una sola superficie curva que
+   cubre la misma area de pared, dividida en tres secciones de contenido. */
+const CURVED_SCREEN_R = baseRadius*0.84;
+const CURVED_SCREEN_Y0 = 0.85, CURVED_SCREEN_Y1 = 2.35;
+const CURVED_SEGMENTS = 64;
+
+function buildCurvedScreenGeometry(azStart, azEnd, r, y0, y1, segments){
+  const geo = new THREE.BufferGeometry();
+  const verts = [], uvs = [], idx = [];
+  for(let i=0;i<=segments;i++){
+    const t = i/segments;
+    const az = azStart + (azEnd-azStart)*t;
+    const x = Math.sin(az)*r, z = Math.cos(az)*r;
+    verts.push(x,y0,z,  x,y1,z);
+    uvs.push(1-t,0,  1-t,1); // invertido: para que se lea correctamente visto desde el interior
+  }
+  for(let i=0;i<segments;i++){
+    const a=i*2, b=i*2+1, c=i*2+2, d=i*2+3;
+    idx.push(a,b,c, b,d,c); // orden para normal hacia el centro (interior)
+  }
+  geo.setIndex(idx);
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(verts,3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs,2));
+  geo.computeVertexNormals();
+  return geo;
+}
+
+// textura compuesta: tres secciones dibujadas por separado y unidas
+function buildInteriorCurvedTexture(chimeraIndex=0){
+  const secW=900, secH=900;
+  const mk = (fn)=>{ const c=document.createElement('canvas'); c.width=secW; c.height=secH; fn(c.getContext('2d'),secW,secH); return c; };
+  const s1 = mk(drawNodesSection);
+  const s2 = mk((ctx,w,h)=>drawChimera(ctx,w,h,chimeraIndex));
+  const s3 = mk(drawConceptSection);
+
+  const big = document.createElement('canvas'); big.width=secW*3; big.height=secH;
+  const bctx = big.getContext('2d');
+  bctx.drawImage(s1,0,0); bctx.drawImage(s2,secW,0); bctx.drawImage(s3,secW*2,0);
+  bctx.strokeStyle='rgba(255,255,255,0.15)'; bctx.lineWidth=3;
+  bctx.beginPath(); bctx.moveTo(secW,0); bctx.lineTo(secW,secH); bctx.stroke();
+  bctx.beginPath(); bctx.moveTo(secW*2,0); bctx.lineTo(secW*2,secH); bctx.stroke();
+
+  const tex = new THREE.CanvasTexture(big);
+  tex.encoding = THREE.sRGBEncoding;
+  tex.anisotropy = 4;
+  return tex;
+}
+
+// respaldo oscuro, un poco mas grande, detras de la pantalla curva
+const curvedBackingGeo = buildCurvedScreenGeometry(
+  SCREEN_AZ_START-0.02, SCREEN_AZ_END+0.02, CURVED_SCREEN_R+0.03,
+  CURVED_SCREEN_Y0-0.09, CURVED_SCREEN_Y1+0.09, CURVED_SEGMENTS
+);
+const curvedBacking = new THREE.Mesh(curvedBackingGeo,
+  new THREE.MeshStandardMaterial({ color:0x0a0d0e, roughness:0.6, metalness:0.4, side:THREE.DoubleSide })
+);
+domeGroup.add(curvedBacking);
+
+const curvedScreenGeo = buildCurvedScreenGeometry(
+  SCREEN_AZ_START, SCREEN_AZ_END, CURVED_SCREEN_R, CURVED_SCREEN_Y0, CURVED_SCREEN_Y1, CURVED_SEGMENTS
+);
+let interiorChimeraIndex = 0;
+const curvedScreenMesh = new THREE.Mesh(curvedScreenGeo,
+  new THREE.MeshBasicMaterial({ map: buildInteriorCurvedTexture(interiorChimeraIndex), toneMapped:false, side:THREE.DoubleSide })
+);
+domeGroup.add(curvedScreenMesh);
+
+// luces de acento, una por seccion
+const curvedSectionLights = [
+  { az: SCREEN_AZ_START + (SCREEN_AZ_END-SCREEN_AZ_START)*(5/6), color:0x5ff7e0 }, // 01 nodos
+  { az: SCREEN_AZ_START + (SCREEN_AZ_END-SCREEN_AZ_START)*(3/6), color:0xff3d8a }, // 02 quimera
+  { az: SCREEN_AZ_START + (SCREEN_AZ_END-SCREEN_AZ_START)*(1/6), color:0xffcf5c }, // 03 concepto
+];
+curvedSectionLights.forEach(s=>{
+  const lx = Math.sin(s.az)*(CURVED_SCREEN_R-0.9), lz = Math.cos(s.az)*(CURVED_SCREEN_R-0.9);
+  const light = new THREE.PointLight(s.color, 0.8, 3.0, 2);
+  light.position.set(lx, 1.7, lz);
+  scene.add(light);
+});
+
+// etiquetas de proximidad por seccion (para el HUD)
+const curvedSections = [
+  { az: SCREEN_AZ_START + (SCREEN_AZ_END-SCREEN_AZ_START)*(5/6), label:'01 · Tres nodos de interacción' },
+  { az: SCREEN_AZ_START + (SCREEN_AZ_END-SCREEN_AZ_START)*(3/6), label:'02 · Generador de Quimeras' },
+  { az: SCREEN_AZ_START + (SCREEN_AZ_END-SCREEN_AZ_START)*(1/6), label:'03 · ¿Cómo recorremos el Metro?' },
+];
+
+/* --- panel de control tactil central ----------------------------------
+   Controla que variante de Quimera se proyecta en el exterior del domo. */
+const controlBase = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.24,0.30,0.85,20),
+  new THREE.MeshStandardMaterial({ color:0x101416, roughness:0.55, metalness:0.5 })
+);
+controlBase.position.set(0,0.425,0);
+domeGroup.add(controlBase);
+
+function drawControlPanel(ctx,w,h,activeIndex){
+  ctx.fillStyle='#0a0d0e'; ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle='rgba(95,247,224,0.5)'; ctx.lineWidth=6;
+  ctx.strokeRect(6,6,w-12,h-12);
+  ctx.fillStyle='#5ff7e0'; ctx.font='600 30px monospace'; ctx.textAlign='center';
+  ctx.fillText('PANEL DE CONTROL', w/2, 60);
+  ctx.fillStyle='#9fb0b4'; ctx.font='18px monospace';
+  ctx.fillText('sección 02 · generador de quimeras', w/2, 92);
+
+  const labels=['VARIANTE 1','VARIANTE 2','VARIANTE 3'];
+  const bw=(w-120)/3;
+  labels.forEach((lb,i)=>{
+    const x=60+i*bw;
+    const active = i===activeIndex;
+    ctx.fillStyle = active ? '#5ff7e0' : 'rgba(255,255,255,0.06)';
+    ctx.fillRect(x, 130, bw-20, 90);
+    ctx.strokeStyle = active ? '#5ff7e0' : 'rgba(255,255,255,0.25)'; ctx.lineWidth=3;
+    ctx.strokeRect(x, 130, bw-20, 90);
+    ctx.fillStyle = active ? '#04100e' : '#c7d3d5';
+    ctx.font='600 16px monospace';
+    ctx.fillText(lb, x+(bw-20)/2, 182);
+  });
+  ctx.textAlign='left';
+}
+const controlCanvas = document.createElement('canvas'); controlCanvas.width=600; controlCanvas.height=260;
+const controlCtx = controlCanvas.getContext('2d');
+drawControlPanel(controlCtx,600,260,0);
+const controlTex = new THREE.CanvasTexture(controlCanvas);
+controlTex.encoding = THREE.sRGBEncoding;
+
+const controlPanelMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(0.62, 0.27),
+  new THREE.MeshBasicMaterial({ map:controlTex, toneMapped:false, side:THREE.DoubleSide })
+);
+controlPanelMesh.position.set(0, 0.92, 0);
+controlPanelMesh.rotation.x = -Math.PI/2.9; // ligeramente inclinado, como un atril tactil
+domeGroup.add(controlPanelMesh);
+controlPanelMesh.userData.label = 'Panel de control · toca para cambiar la Quimera';
+
+const controlGlow = new THREE.PointLight(0x5ff7e0, 0.5, 2.5, 2);
+controlGlow.position.set(0,1.3,0);
+scene.add(controlGlow);
+
+function cycleChimeraVariant(){
+  interiorChimeraIndex = (interiorChimeraIndex+1) % CHIMERA_PALETTES.length;
+  curvedScreenMesh.material.map = buildInteriorCurvedTexture(interiorChimeraIndex);
+  curvedScreenMesh.material.needsUpdate = true;
+  drawControlPanel(controlCtx,600,260,interiorChimeraIndex);
+  controlTex.needsUpdate = true;
+}
+
+
+
+/* ---------------------------------------------------------------------
+   CONTROLES DE PRIMERA PERSONA (mouse/touch, sin Pointer Lock)
+--------------------------------------------------------------------- */
+// el personaje principal comienza AFUERA del domo, frente a la puerta de acceso
+const startDist = baseRadius + 4.5;
+camera.position.set(
+  Math.sin(DOOR_AZIMUTH)*startDist,
+  EYE_H,
+  Math.cos(DOOR_AZIMUTH)*startDist
+);
+let yaw = -Math.PI/2, pitch = 0; // orientado hacia el centro/puerta del domo
+const moveState = { fwd:0, strafe:0 };
+const keys = {};
+const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints>0;
+
+document.addEventListener('keydown', e=>{ keys[e.code]=true; });
+document.addEventListener('keyup',   e=>{ keys[e.code]=false; });
+
+function applyKeyboard(){
+  let f=0, s=0;
+  if(keys['KeyW']||keys['ArrowUp'])    f+=1;
+  if(keys['KeyS']||keys['ArrowDown'])  f-=1;
+  if(keys['KeyD']||keys['ArrowRight']) s+=1;
+  if(keys['KeyA']||keys['ArrowLeft'])  s-=1;
+  moveState.fwd = f; moveState.strafe = s;
+}
+
+/* --- desktop: arrastrar con mouse para mirar --- */
+let dragging=false, lastX=0, lastY=0;
+renderer.domElement.addEventListener('mousedown', e=>{ dragging=true; lastX=e.clientX; lastY=e.clientY; });
+window.addEventListener('mouseup', ()=> dragging=false);
+window.addEventListener('mousemove', e=>{
+  if(!dragging) return;
+  const dx=e.clientX-lastX, dy=e.clientY-lastY;
+  lastX=e.clientX; lastY=e.clientY;
+  yaw -= dx*0.0032;
+  pitch -= dy*0.0032;
+  pitch = Math.max(-1.3, Math.min(1.3, pitch));
+});
+
+/* --- movil: joysticks dinamicos en cada mitad de pantalla --- */
+const joyMoveEl = document.getElementById('joyMove');
+const joyLookEl = document.getElementById('joyLook');
+let moveTouchId=null, lookTouchId=null;
+let moveOrigin={x:0,y:0}, lookLast={x:0,y:0};
+const JOY_MAX = 44;
+
+function showJoy(el, x, y){ el.style.left=(x-48)+'px'; el.style.top=(y-48)+'px'; el.style.display='block'; }
+function hideJoy(el){ el.style.display='none'; el.querySelector('.knob').style.transform='translate(0,0)'; }
+
+renderer.domElement.addEventListener('touchstart', e=>{
+  for(const t of e.changedTouches){
+    const half = window.innerWidth/2;
+    if(t.clientX < half && moveTouchId===null){
+      moveTouchId = t.identifier;
+      moveOrigin = {x:t.clientX, y:t.clientY};
+      showJoy(joyMoveEl, t.clientX, t.clientY);
+    } else if(t.clientX >= half && lookTouchId===null){
+      lookTouchId = t.identifier;
+      lookLast = {x:t.clientX, y:t.clientY};
+      showJoy(joyLookEl, t.clientX, t.clientY);
+    }
+  }
+}, {passive:true});
+
+renderer.domElement.addEventListener('touchmove', e=>{
+  for(const t of e.changedTouches){
+    if(t.identifier===moveTouchId){
+      let dx=t.clientX-moveOrigin.x, dy=t.clientY-moveOrigin.y;
+      const len=Math.hypot(dx,dy);
+      if(len>JOY_MAX){ dx=dx/len*JOY_MAX; dy=dy/len*JOY_MAX; }
+      joyMoveEl.querySelector('.knob').style.transform = `translate(${dx}px,${dy}px)`;
+      moveState.fwd = -dy/JOY_MAX;
+      moveState.strafe = dx/JOY_MAX;
+    } else if(t.identifier===lookTouchId){
+      const dx=t.clientX-lookLast.x, dy=t.clientY-lookLast.y;
+      lookLast={x:t.clientX,y:t.clientY};
+      yaw -= dx*0.0045;
+      pitch -= dy*0.0045;
+      pitch = Math.max(-1.3, Math.min(1.3, pitch));
+    }
+  }
+}, {passive:true});
+
+function endTouch(e){
+  for(const t of e.changedTouches){
+    if(t.identifier===moveTouchId){ moveTouchId=null; moveState.fwd=0; moveState.strafe=0; hideJoy(joyMoveEl); }
+    if(t.identifier===lookTouchId){ lookTouchId=null; hideJoy(joyLookEl); }
+  }
+}
+renderer.domElement.addEventListener('touchend', endTouch);
+renderer.domElement.addEventListener('touchcancel', endTouch);
+
+/* ---------------------------------------------------------------------
+   INTRO / ENTRADA
+--------------------------------------------------------------------- */
+document.getElementById('enterBtn').addEventListener('click', ()=>{
+  document.getElementById('intro').style.display='none';
+  if(!isTouch) document.getElementById('crosshair').style.display='block';
+  else document.getElementById('touchZones').style.display='block';
+});
+
+/* ---------------------------------------------------------------------
+   BUCLE DE ANIMACION
+--------------------------------------------------------------------- */
+const clock = new THREE.Clock();
+const SPEED = 1.6;
+const panelLabelEl = document.getElementById('panelLabel');
+const coordsOut = document.getElementById('coordsOut');
+const controlBtnEl = document.getElementById('controlBtn');
+controlBtnEl.addEventListener('click', cycleChimeraVariant);
+
+// gama de color que recorren suavemente las lineas/tensores del domo
+const COLOR_CYCLE = [0xff2e2e, 0x33e07a, 0x3a7bff, 0xffe14d, 0xa347ff].map(c=>new THREE.Color(c));
+const CYCLE_SECONDS = 4.5; // duracion de cada transicion entre colores
+const cA = new THREE.Color(), cB = new THREE.Color(), cOut = new THREE.Color();
+
+function collide(current, desired){
+  const wallR = domeRadiusAt(EYE_H);
+  const curR = Math.hypot(current.x, current.z);
+  const desR = Math.hypot(desired.x, desired.z);
+  const az = Math.atan2(desired.x, desired.z);
+  const doorOpen = angleDelta(az, DOOR_AZIMUTH) < DOOR_HALF_WIDTH;
+
+  // si el movimiento cruza el muro del domo y no estamos en la puerta, se bloquea
+  const crossing = (curR - wallR) * (desR - wallR) < 0;
+  if(crossing && !doorOpen){
+    return current; // no atraviesa el muro
+  }
+  // limite exterior de la plaza
+  if(desR > OUTER_R - 0.6){
+    const k = (OUTER_R-0.6)/desR;
+    return new THREE.Vector3(desired.x*k, desired.y, desired.z*k);
+  }
+  return desired;
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t = performance.now()*0.001;
+
+  applyKeyboard();
+
+  camera.rotation.order='YXZ';
+  camera.rotation.y = yaw;
+  camera.rotation.x = pitch;
+
+  const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)).multiplyScalar(-1);
+  const right = new THREE.Vector3(Math.sin(yaw+Math.PI/2), 0, Math.cos(yaw+Math.PI/2)).multiplyScalar(-1);
+
+  const move = new THREE.Vector3();
+  move.addScaledVector(forward, moveState.fwd);
+  move.addScaledVector(right, moveState.strafe);
+  if(move.lengthSq()>0){ move.normalize().multiplyScalar(SPEED*dt); }
+
+  const desired = camera.position.clone().add(move);
+  const resolved = collide(camera.position, desired);
+  camera.position.x = resolved.x;
+  camera.position.z = resolved.z;
+  camera.position.y = EYE_H;
+
+  const insideDome = Math.hypot(camera.position.x,camera.position.z) < domeRadiusAt(EYE_H);
+  const camAz = Math.atan2(camera.position.x, camera.position.z);
+  const distFromCenter = Math.hypot(camera.position.x, camera.position.z);
+
+  // etiqueta segun contexto: seccion de la pantalla curva o panel de control
+  let labelText = '';
+  const distToControl = camera.position.distanceTo(controlPanelMesh.position);
+  if(insideDome && distToControl < 1.35){
+    labelText = controlPanelMesh.userData.label;
+    controlBtnEl.classList.add('visible');
+  } else {
+    controlBtnEl.classList.remove('visible');
+    if(insideDome && distFromCenter > CURVED_SCREEN_R*0.5){
+      let best=null, bestDelta=0.5;
+      curvedSections.forEach(s=>{
+        const d = angleDelta(camAz, s.az);
+        if(d<bestDelta){ bestDelta=d; best=s; }
+      });
+      if(best) labelText = best.label;
+    }
+  }
+  if(labelText){
+    panelLabelEl.textContent = labelText;
+    panelLabelEl.style.opacity = 1;
+  } else {
+    panelLabelEl.style.opacity = 0;
+  }
+
+  coordsOut.textContent = (insideDome?'interior':'exterior') +
+    `  ·  x ${camera.position.x.toFixed(1)}   z ${camera.position.z.toFixed(1)}`;
+
+  // pulso sutil de la luz del oculo
+  domeTopLight.intensity = 0.55 + Math.sin(t*0.7)*0.08;
+
+  // ciclo de color suave de las lineas del domo: rojo -> verde -> azul -> amarillo -> morado
+  const n = COLOR_CYCLE.length;
+  const phase = (t / CYCLE_SECONDS) % n;
+  const idx = Math.floor(phase);
+  const frac = phase - idx;
+  cA.copy(COLOR_CYCLE[idx]);
+  cB.copy(COLOR_CYCLE[(idx+1)%n]);
+  cOut.copy(cA).lerp(cB, frac);
+  innerGlowMat.emissive.copy(cOut);
+  interiorMoodLight.color.copy(cOut);
+
+  // nodos de color en movimiento sobre el piso
+  floorTravelers.forEach(d=>{
+    const u = d.userData;
+    const travel = 0.15 + 0.8*(0.5+0.5*Math.sin(t*u.speed + u.phase));
+    d.position.x = Math.sin(u.az)*u.lenWorld*travel;
+    d.position.z = Math.cos(u.az)*u.lenWorld*travel;
+    d.scale.setScalar(0.8+0.3*Math.sin(t*2+u.phase));
+  });
+
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', ()=>{
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+})();
+</script>
+</body>
+</html>
