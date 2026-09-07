@@ -1,0 +1,1634 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>QUIMERAS — Domo Interactivo / Metro de Santiago</title>
+<style>
+  :root{
+    --cyan:#5ff7e0;
+    --magenta:#ff3d8a;
+    --amber:#ffcf5c;
+    --ink:#060709;
+    --paper:#e9f4f1;
+    --line1:#ff0000;
+    --line2:#0098d4;
+    --line3:#e8a800;
+    --line4:#00b0b0;
+    --line5:#8a6c4a;
+    --line6:#d00070;
+  }
+  html,body{
+    margin:0; padding:0; width:100%; height:100%;
+    background:var(--ink); overflow:hidden;
+    font-family: 'Courier New', ui-monospace, monospace;
+    -webkit-user-select:none; user-select:none;
+    touch-action:none;
+  }
+  canvas{ display:block; }
+
+  #hud{
+    position:fixed; top:0; left:0; right:0;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    padding:14px 16px; pointer-events:none; z-index:5;
+  }
+  #hud .brand{
+    color:var(--cyan); font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; line-height:1.6;
+    text-shadow:0 0 8px rgba(95,247,224,.5);
+  }
+  #hud .brand small{ color:#6c7a82; display:block; letter-spacing:.08em; }
+  #hud .coords{
+    color:#5a6b70; font-size:10px; letter-spacing:.05em; text-align:right;
+  }
+
+  #crosshair{
+    position:fixed; top:50%; left:50%; width:6px; height:6px;
+    margin:-3px 0 0 -3px; border-radius:50%;
+    border:1px solid rgba(95,247,224,.65); z-index:5; pointer-events:none;
+    box-shadow:0 0 6px rgba(95,247,224,.4);
+    display:block;
+  }
+
+  #joyMove, #joyLook{
+    position:fixed; width:96px; height:96px; border-radius:50%;
+    border:1px solid rgba(95,247,224,.35); background:rgba(95,247,224,.04);
+    z-index:8; display:none; pointer-events:none;
+  }
+  #joyMove .knob, #joyLook .knob{
+    position:absolute; width:40px; height:40px; border-radius:50%;
+    left:28px; top:28px; background:rgba(95,247,224,.25);
+    border:1px solid rgba(95,247,224,.7);
+  }
+
+  #touchZones{ position:fixed; inset:0; z-index:6; display:none; }
+  #touchZones div{ position:absolute; top:0; bottom:0; width:50%; }
+  #zoneL{ left:0; } #zoneR{ right:0; }
+
+  #panelLabel{
+    position:fixed; bottom:16px; left:0; right:0; text-align:center;
+    color:#5a6b70; font-size:10px; letter-spacing:.15em; z-index:5;
+    pointer-events:none; text-transform:uppercase; opacity:0; transition:opacity .4s;
+  }
+
+  #controlBtn{
+    position:fixed; bottom:56px; left:50%; transform:translateX(-50%);
+    background:rgba(95,247,224,.12); border:1px solid var(--cyan); color:var(--cyan);
+    padding:10px 20px; font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+    font-family:inherit; border-radius:2px; z-index:9; opacity:0; pointer-events:none;
+    transition:opacity .3s; display:flex; align-items:center; gap:8px;
+  }
+  #controlBtn.visible{ opacity:1; pointer-events:auto; }
+</style>
+</head>
+<body>
+
+<div id="hud">
+  <div class="brand">QUIMERAS<small>domo · sesión 01</small></div>
+  <div class="coords" id="coordsOut">x 0.0 &nbsp; z 0.0</div>
+</div>
+<div id="crosshair"></div>
+<div id="panelLabel"></div>
+<button id="controlBtn">Tocar panel · cambiar Quimera</button>
+
+<div id="touchZones"><div id="zoneL"></div><div id="zoneR"></div></div>
+<div id="joyMove"><div class="knob"></div></div>
+<div id="joyLook"><div class="knob"></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+
+/* ---------------------------------------------------------------------
+   ESCENA BASE
+--------------------------------------------------------------------- */
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf5f0eb);
+scene.fog = new THREE.FogExp2(0xf5f0eb, 0.006);
+
+const camera = new THREE.PerspectiveCamera(62, window.innerWidth/window.innerHeight, 0.05, 140);
+const EYE_H = 1.62;
+
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputEncoding = THREE.sRGBEncoding;
+document.body.appendChild(renderer.domElement);
+
+/* ---------------------------------------------------------------------
+   PARAMETROS DEL DOMO
+--------------------------------------------------------------------- */
+const SPHERE_R = 3.6;
+const CAP_BOTTOM_LOCAL = -1.4;
+const DETAIL = 3;
+const translateY = -CAP_BOTTOM_LOCAL;
+const DOME_HEIGHT = SPHERE_R - CAP_BOTTOM_LOCAL;
+const baseRadius = Math.sqrt(SPHERE_R*SPHERE_R - CAP_BOTTOM_LOCAL*CAP_BOTTOM_LOCAL);
+const OUTER_R = 10;
+
+const DOOR_AZIMUTH = Math.PI*1.5;
+const DOOR_HALF_WIDTH = 0.30;
+const DOOR_TOP_H = 3.4;
+
+function domeRadiusAt(y){
+  const localY = y - translateY;
+  const v = SPHERE_R*SPHERE_R - localY*localY;
+  return v>0 ? Math.sqrt(v) : 0;
+}
+function angleDelta(a,b){
+  let d = a-b;
+  while(d> Math.PI) d-=Math.PI*2;
+  while(d<-Math.PI) d+=Math.PI*2;
+  return Math.abs(d);
+}
+function inDoorway(x,z,y){
+  const az = Math.atan2(x,z);
+  return angleDelta(az,DOOR_AZIMUTH) < DOOR_HALF_WIDTH && y < DOOR_TOP_H;
+}
+
+const SCREEN_AZ_START = Math.PI*0.12, SCREEN_AZ_END = Math.PI*0.98;
+const SCREEN_AZ_CENTER = (SCREEN_AZ_START+SCREEN_AZ_END)/2;
+const SCREEN_AZ_HALF = (SCREEN_AZ_END-SCREEN_AZ_START)/2 + 0.12;
+
+/* ---------------------------------------------------------------------
+   ENTORNO INTERIOR
+--------------------------------------------------------------------- */
+const ROOM_SIZE = 20;
+const ROOM_HALF = ROOM_SIZE/2;
+const ROOM_HEIGHT = 6.5;
+
+function createWhiteTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#f5f0eb';
+    ctx.fillRect(0, 0, 512, 512);
+    for (let i = 0; i < 3000; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        const r = Math.random() * 1.2;
+        const alpha = Math.random() * 0.04;
+        ctx.fillStyle = `rgba(200,190,180,${alpha})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(6, 6);
+    texture.anisotropy = 4;
+    return texture;
+}
+
+const whiteTex = createWhiteTexture();
+
+const whiteMat = new THREE.MeshStandardMaterial({
+    map: whiteTex,
+    roughness: 0.7,
+    metalness: 0.02,
+    color: 0xf5f0eb,
+});
+
+function createWall(w, h, x, y, z, rz=0) {
+    const geo = new THREE.PlaneGeometry(w, h);
+    const mesh = new THREE.Mesh(geo, whiteMat);
+    mesh.position.set(x, y, z);
+    mesh.rotation.y = rz;
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.rotation.order = 'YXZ';
+    scene.add(mesh);
+    return mesh;
+}
+
+const wallHeight = ROOM_HEIGHT;
+const wallY = wallHeight/2;
+createWall(ROOM_SIZE, wallHeight, 0, wallY, -ROOM_HALF, 0);
+createWall(ROOM_SIZE, wallHeight, 0, wallY, ROOM_HALF, Math.PI);
+createWall(ROOM_SIZE, wallHeight, -ROOM_HALF, wallY, 0, -Math.PI/2);
+createWall(ROOM_SIZE, wallHeight, ROOM_HALF, wallY, 0, Math.PI/2);
+
+// Techo
+function createCeilingTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#7a7a7a';
+    ctx.fillRect(0, 0, 512, 512);
+    for (let i = 0; i < 8000; i++) {
+        const x = Math.random() * 512;
+        const y = Math.random() * 512;
+        const r = Math.random() * 2;
+        const alpha = Math.random() * 0.08;
+        ctx.fillStyle = `rgba(0,0,0,${alpha})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(6, 6);
+    texture.anisotropy = 4;
+    return texture;
+}
+
+const ceilingMat = new THREE.MeshStandardMaterial({
+    map: createCeilingTexture(),
+    roughness: 0.9,
+    metalness: 0.05,
+    color: 0x8a8a8a,
+    side: THREE.BackSide
+});
+const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_SIZE, ROOM_SIZE), ceilingMat);
+ceiling.rotation.x = -Math.PI/2;
+ceiling.position.y = ROOM_HEIGHT;
+scene.add(ceiling);
+
+// Suelo exterior
+const floorMatExterior = new THREE.MeshStandardMaterial({
+    map: whiteTex,
+    roughness: 0.85,
+    metalness: 0.02,
+    color: 0xe0dcd6,
+});
+const floorExterior = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_SIZE, ROOM_SIZE), floorMatExterior);
+floorExterior.rotation.x = -Math.PI/2;
+floorExterior.position.y = 0.01;
+scene.add(floorExterior);
+
+/* ---------------------------------------------------------------------
+   ESTRUCTURA GEODESICA (se crea primero el grupo)
+--------------------------------------------------------------------- */
+const domeGroup = new THREE.Group();
+scene.add(domeGroup);
+
+const ico = new THREE.IcosahedronGeometry(SPHERE_R, DETAIL);
+ico.translate(0, translateY, 0);
+
+const pos = ico.attributes.position;
+const panelVerts = [];
+const edgeMap = new Map();
+
+function keyFor(v){
+  return v.x.toFixed(3)+','+v.y.toFixed(3)+','+v.z.toFixed(3);
+}
+function addEdge(a,b){
+  const k = keyFor(a) < keyFor(b) ? keyFor(a)+'|'+keyFor(b) : keyFor(b)+'|'+keyFor(a);
+  if(!edgeMap.has(k)) edgeMap.set(k, [a.clone(), b.clone()]);
+}
+
+const v0 = new THREE.Vector3(), v1 = new THREE.Vector3(), v2 = new THREE.Vector3();
+let triIndex = 0;
+for(let i=0;i<pos.count;i+=3){
+  v0.fromBufferAttribute(pos,i);
+  v1.fromBufferAttribute(pos,i+1);
+  v2.fromBufferAttribute(pos,i+2);
+  const cy = (v0.y+v1.y+v2.y)/3;
+  const inDoor = inDoorway(v0.x,v0.z,v0.y) && inDoorway(v1.x,v1.z,v1.y) && inDoorway(v2.x,v2.z,v2.y);
+  if(cy > 0.03 && !inDoor){
+    addEdge(v0,v1); addEdge(v1,v2); addEdge(v2,v0);
+
+    const openTriCentroid = new THREE.Vector3((v0.x+v1.x+v2.x)/3, cy, (v0.z+v1.z+v2.z)/3);
+    const triAz = Math.atan2(openTriCentroid.x, openTriCentroid.z);
+    const nearDoor = angleDelta(triAz, DOOR_AZIMUTH) < DOOR_HALF_WIDTH + 0.22;
+    const nearScreenWall = angleDelta(triAz, SCREEN_AZ_CENTER) < SCREEN_AZ_HALF;
+    const hash = Math.abs(Math.sin(triIndex*12.9898)*43758.5453) % 1;
+    const isOpenGap = hash < 0.16 && cy > 1.0 && cy < DOME_HEIGHT*0.88 &&
+                       !nearDoor && !nearScreenWall;
+    if(!isOpenGap){
+      panelVerts.push(v0.x,v0.y,v0.z, v1.x,v1.y,v1.z, v2.x,v2.y,v2.z);
+    }
+  }
+  triIndex++;
+}
+
+const panelGeo = new THREE.BufferGeometry();
+panelGeo.setAttribute('position', new THREE.Float32BufferAttribute(panelVerts,3));
+panelGeo.computeVertexNormals();
+const panelMat = new THREE.MeshStandardMaterial({
+  color: 0xf1f1ee, roughness:0.65, metalness:0.06, side: THREE.DoubleSide
+});
+domeGroup.add(new THREE.Mesh(panelGeo, panelMat));
+
+const strutMat = new THREE.MeshStandardMaterial({
+  color:0xf5f5f2, roughness:0.5, metalness:0.15
+});
+const strutRadius = 0.012;
+const cyl = new THREE.CylinderGeometry(strutRadius, strutRadius, 1, 6, 1);
+const strutMesh = new THREE.InstancedMesh(cyl, strutMat, edgeMap.size);
+let si = 0;
+const tmpObj = new THREE.Object3D();
+edgeMap.forEach(([a,b])=>{
+  const mid = a.clone().add(b).multiplyScalar(0.5);
+  const dir = b.clone().sub(a);
+  const len = dir.length();
+  tmpObj.position.copy(mid);
+  tmpObj.scale.set(1,len,1);
+  const axis = new THREE.Vector3(0,1,0);
+  const quat = new THREE.Quaternion().setFromUnitVectors(axis, dir.clone().normalize());
+  tmpObj.quaternion.copy(quat);
+  tmpObj.updateMatrix();
+  strutMesh.setMatrixAt(si++, tmpObj.matrix);
+});
+domeGroup.add(strutMesh);
+
+const sphereCenterVec = new THREE.Vector3(0, translateY, 0);
+const innerGlowMat = new THREE.MeshStandardMaterial({
+  color:0x030405, emissive:0xff2e2e, emissiveIntensity:1.3, roughness:0.5, metalness:0.2
+});
+const INNER_OFFSET = 0.045;
+const innerRadius = 0.016;
+const cylInner = new THREE.CylinderGeometry(innerRadius, innerRadius, 1, 6, 1);
+const innerGlowMesh = new THREE.InstancedMesh(cylInner, innerGlowMat, edgeMap.size);
+let gi = 0;
+const tmpIn = new THREE.Object3D();
+function pullInward(v, amount){
+  const dir = sphereCenterVec.clone().sub(v).normalize();
+  return v.clone().addScaledVector(dir, amount);
+}
+edgeMap.forEach(([a,b])=>{
+  const ai = pullInward(a, INNER_OFFSET);
+  const bi = pullInward(b, INNER_OFFSET);
+  const mid = ai.clone().add(bi).multiplyScalar(0.5);
+  const dir = bi.clone().sub(ai);
+  const len = dir.length();
+  tmpIn.position.copy(mid);
+  tmpIn.scale.set(1,len,1);
+  const axis = new THREE.Vector3(0,1,0);
+  const quat = new THREE.Quaternion().setFromUnitVectors(axis, dir.clone().normalize());
+  tmpIn.quaternion.copy(quat);
+  tmpIn.updateMatrix();
+  innerGlowMesh.setMatrixAt(gi++, tmpIn.matrix);
+});
+domeGroup.add(innerGlowMesh);
+
+/* ---------------------------------------------------------------------
+   SUELO INTERIOR DEL DOMO (después de domeGroup)
+--------------------------------------------------------------------- */
+function createInteriorFloorTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#4a4e50';
+    ctx.fillRect(0, 0, 1024, 1024);
+    for (let i = 0; i < 15000; i++) {
+        const x = Math.random() * 1024;
+        const y = Math.random() * 1024;
+        const r = Math.random() * 2;
+        const alpha = Math.random() * 0.12;
+        ctx.fillStyle = `rgba(0,0,0,${alpha})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(4, 4);
+    texture.anisotropy = 4;
+    return texture;
+}
+
+const interiorFloorMat = new THREE.MeshStandardMaterial({
+    map: createInteriorFloorTexture(),
+    roughness: 0.9,
+    metalness: 0.05,
+    color: 0x4a4e50,
+});
+
+const interiorFloorGeo = new THREE.CircleGeometry(baseRadius * 1.02, 64);
+const interiorFloor = new THREE.Mesh(interiorFloorGeo, interiorFloorMat);
+interiorFloor.rotation.x = -Math.PI/2;
+interiorFloor.position.y = 0.015;
+scene.add(interiorFloor);
+
+/* ---------------------------------------------------------------------
+   NODOS DE COLOR EN MOVIMIENTO - CARTOGRAFÍAS
+--------------------------------------------------------------------- */
+const FLOOR_LINE_DEFS = [
+  {az:0.15, len:0.55, color:0x5ff7e0},
+  {az:0.85, len:0.72, color:0xff3d8a},
+  {az:1.55, len:0.48, color:0x5ff7e0},
+  {az:2.25, len:0.68, color:0xff3d8a},
+  {az:2.95, len:0.82, color:0x5ff7e0},
+  {az:3.65, len:0.54, color:0xff3d8a},
+  {az:4.35, len:0.76, color:0x5ff7e0},
+  {az:5.05, len:0.60, color:0xff3d8a},
+  {az:5.75, len:0.70, color:0x5ff7e0},
+  {az:6.45, len:0.50, color:0xff3d8a},
+  {az:7.15, len:0.80, color:0x5ff7e0},
+  {az:7.85, len:0.62, color:0xff3d8a},
+];
+const floorTravelers = [];
+FLOOR_LINE_DEFS.forEach((L,i)=>{
+  const lenWorld = baseRadius * L.len;
+  for(let k=0;k<2;k++){
+    const dot = new THREE.Mesh(
+      new THREE.CircleGeometry(0.045, 12),
+      new THREE.MeshBasicMaterial({
+        color: L.color,
+        transparent: true,
+        opacity: 0.7,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+      })
+    );
+    dot.rotation.x = -Math.PI/2;
+    dot.position.y = 0.02;
+    dot.userData = {
+      az: L.az,
+      lenWorld,
+      speed: 0.25 + 0.08 * k,
+      phase: i * 1.2 + k * 2.7,
+      offset: 0.15 + 0.7 * (i / FLOOR_LINE_DEFS.length)
+    };
+    scene.add(dot);
+    floorTravelers.push(dot);
+  }
+});
+
+const lineMat = new THREE.LineBasicMaterial({
+  color: 0x5ff7e0,
+  transparent: true,
+  opacity: 0.15,
+  blending: THREE.AdditiveBlending
+});
+const linePoints = [];
+for(let i = 0; i < 30; i++){
+  const ang = (i / 30) * Math.PI * 2;
+  const r = baseRadius * (0.3 + 0.6 * (i / 30));
+  linePoints.push(new THREE.Vector3(Math.sin(ang) * r, 0.02, Math.cos(ang) * r));
+}
+const lineGeo = new THREE.BufferGeometry().setFromPoints(linePoints);
+const lineMesh = new THREE.Line(lineGeo, lineMat);
+scene.add(lineMesh);
+
+const linePoints2 = [];
+for(let i = 0; i < 24; i++){
+  const ang = (i / 24) * Math.PI * 2 + 0.5;
+  const r = baseRadius * (0.45 + 0.35 * Math.sin(i * 0.7));
+  linePoints2.push(new THREE.Vector3(Math.sin(ang) * r, 0.02, Math.cos(ang) * r));
+}
+const lineGeo2 = new THREE.BufferGeometry().setFromPoints(linePoints2);
+const lineMesh2 = new THREE.Line(lineGeo2, new THREE.LineBasicMaterial({
+  color: 0xff3d8a,
+  transparent: true,
+  opacity: 0.1,
+  blending: THREE.AdditiveBlending
+}));
+scene.add(lineMesh2);
+
+/* ---------------------------------------------------------------------
+   FUNCIÓN PARA CREAR QUIMERA CON ESTÉTICA VR
+--------------------------------------------------------------------- */
+function createVRChimera(position, color1=0x5ff7e0, color2=0xff3d8a, scale=1.0) {
+    const group = new THREE.Group();
+
+    const capsuleMat = new THREE.MeshPhysicalMaterial({
+      color: color1,
+      emissive: color1,
+      emissiveIntensity: 0.1,
+      transparent: true,
+      opacity: 0.08,
+      roughness: 0.1,
+      metalness: 0.9,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.1,
+      side: THREE.DoubleSide
+    });
+    const capsule = new THREE.Mesh(
+      new THREE.SphereGeometry(1.0, 32, 32),
+      capsuleMat
+    );
+    capsule.position.set(0, 0, 0);
+    capsule.scale.set(1.4, 1.0, 1.4);
+    group.add(capsule);
+
+    const ringMat = new THREE.MeshPhysicalMaterial({
+      color: color1,
+      emissive: color1,
+      emissiveIntensity: 0.15,
+      transparent: true,
+      opacity: 0.3,
+      roughness: 0.2,
+      metalness: 0.8,
+      clearcoat: 0.8,
+    });
+    const ring1 = new THREE.Mesh(
+      new THREE.TorusGeometry(1.2, 0.03, 16, 64),
+      ringMat
+    );
+    ring1.position.set(0, 0, 0);
+    ring1.rotation.x = Math.PI / 2;
+    group.add(ring1);
+
+    const ring2 = new THREE.Mesh(
+      new THREE.TorusGeometry(1.1, 0.025, 16, 64),
+      ringMat
+    );
+    ring2.position.set(0, 0, 0);
+    ring2.rotation.z = Math.PI / 3;
+    ring2.rotation.x = Math.PI / 4;
+    group.add(ring2);
+
+    const coreMat = new THREE.MeshPhysicalMaterial({
+      color: color2,
+      emissive: color2,
+      emissiveIntensity: 0.5,
+      transparent: true,
+      opacity: 0.7,
+      roughness: 0.1,
+      metalness: 0.3,
+      clearcoat: 1.0,
+    });
+    const core = new THREE.Mesh(
+      new THREE.IcosahedronGeometry(0.3, 2),
+      coreMat
+    );
+    core.position.set(0, 0, 0);
+    group.add(core);
+
+    const count = 200;
+    const pGeo = new THREE.BufferGeometry();
+    const pPos = new Float32Array(count * 3);
+    const pCol = new Float32Array(count * 3);
+    const c1 = new THREE.Color(color1);
+    const c2 = new THREE.Color(color2);
+    for(let i = 0; i < count; i++){
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.random() * Math.PI * 2;
+      const r = 0.5 + Math.random() * 1.5;
+      pPos[i*3] = Math.sin(theta) * Math.cos(phi) * r;
+      pPos[i*3+1] = Math.sin(theta) * Math.sin(phi) * r;
+      pPos[i*3+2] = Math.cos(theta) * r;
+      const col = new THREE.Color().lerpColors(c1, c2, Math.random());
+      pCol[i*3] = col.r;
+      pCol[i*3+1] = col.g;
+      pCol[i*3+2] = col.b;
+    }
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+    pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
+    const pMat = new THREE.PointsMaterial({
+      size: 0.04,
+      transparent: true,
+      opacity: 0.7,
+      blending: THREE.AdditiveBlending,
+      vertexColors: true,
+      sizeAttenuation: true
+    });
+    const particles = new THREE.Points(pGeo, pMat);
+    particles.position.set(0, 0, 0);
+    group.add(particles);
+
+    const lineMatVR = new THREE.LineBasicMaterial({
+      color: color1,
+      transparent: true,
+      opacity: 0.15,
+      blending: THREE.AdditiveBlending
+    });
+    for(let i = 0; i < 12; i++){
+      const pts = [];
+      const angle = (i / 12) * Math.PI * 2;
+      for(let j = 0; j < 20; j++){
+        const t = j / 20;
+        const r = 0.4 + t * 0.8;
+        const x = Math.sin(angle + t * 0.5) * r;
+        const y = -1.0 + t * 2.0 + Math.sin(angle * 2 + t * 2) * 0.1;
+        const z = Math.cos(angle + t * 0.5) * r;
+        pts.push(new THREE.Vector3(x, y, z));
+      }
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      const line = new THREE.Line(geo, lineMatVR);
+      group.add(line);
+    }
+
+    group.position.copy(position);
+    group.scale.set(scale, scale, scale);
+    return group;
+}
+
+/* ---------------------------------------------------------------------
+   QUIMERAS VR EXTERIORES
+--------------------------------------------------------------------- */
+const chimeraBackPos = new THREE.Vector3(
+  Math.sin(DOOR_AZIMUTH + Math.PI) * (baseRadius + 1.5),
+  DOME_HEIGHT * 0.6,
+  Math.cos(DOOR_AZIMUTH + Math.PI) * (baseRadius + 1.5)
+);
+const chimeraBack = createVRChimera(chimeraBackPos, 0x5ff7e0, 0xff3d8a, 0.9);
+scene.add(chimeraBack);
+
+const chimeraFrontPos = new THREE.Vector3(
+  Math.sin(DOOR_AZIMUTH) * (baseRadius * 0.3),
+  DOME_HEIGHT + 1.0,
+  Math.cos(DOOR_AZIMUTH) * (baseRadius * 0.3)
+);
+const chimeraFront = createVRChimera(chimeraFrontPos, 0xffcf5c, 0x5ff7e0, 1.1);
+scene.add(chimeraFront);
+
+/* =====================================================================
+   NUEVOS ELEMENTOS INTERIORES DEL DOMO
+===================================================================== */
+
+/* ---------------------------------------------------------------------
+   1. HOLOGRAMA CENTRAL - Fusión de obras (Nodo 2)
+--------------------------------------------------------------------- */
+const hologramGroup = new THREE.Group();
+hologramGroup.position.set(0, 1.8, 0);
+scene.add(hologramGroup);
+
+// Base del holograma (anillo de luz)
+const baseRingMat = new THREE.MeshBasicMaterial({
+  color: 0x5ff7e0,
+  transparent: true,
+  opacity: 0.3,
+  wireframe: true
+});
+const baseRing = new THREE.Mesh(
+  new THREE.TorusGeometry(0.8, 0.02, 16, 48),
+  baseRingMat
+);
+baseRing.rotation.x = Math.PI / 2;
+hologramGroup.add(baseRing);
+
+// Núcleo del holograma - esfera con fusión de colores
+const hologramCoreMat = new THREE.MeshPhysicalMaterial({
+  color: 0x5ff7e0,
+  emissive: 0x5ff7e0,
+  emissiveIntensity: 0.4,
+  transparent: true,
+  opacity: 0.3,
+  roughness: 0.1,
+  metalness: 0.1,
+  clearcoat: 0.5,
+});
+const hologramCore = new THREE.Mesh(
+  new THREE.SphereGeometry(0.5, 32, 32),
+  hologramCoreMat
+);
+hologramGroup.add(hologramCore);
+
+// Partículas del holograma
+const holoParticleCount = 150;
+const holoParticleGeo = new THREE.BufferGeometry();
+const holoParticlePos = new Float32Array(holoParticleCount * 3);
+const holoParticleColors = new Float32Array(holoParticleCount * 3);
+for(let i = 0; i < holoParticleCount; i++){
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.random() * Math.PI * 2;
+  const r = 0.3 + Math.random() * 0.6;
+  holoParticlePos[i*3] = Math.sin(theta) * Math.cos(phi) * r;
+  holoParticlePos[i*3+1] = Math.sin(theta) * Math.sin(phi) * r;
+  holoParticlePos[i*3+2] = Math.cos(theta) * r;
+  const color = new THREE.Color().setHSL(0.5 + Math.random() * 0.2, 1, 0.5);
+  holoParticleColors[i*3] = color.r;
+  holoParticleColors[i*3+1] = color.g;
+  holoParticleColors[i*3+2] = color.b;
+}
+holoParticleGeo.setAttribute('position', new THREE.BufferAttribute(holoParticlePos, 3));
+holoParticleGeo.setAttribute('color', new THREE.BufferAttribute(holoParticleColors, 3));
+const holoParticleMat = new THREE.PointsMaterial({
+  size: 0.03,
+  transparent: true,
+  opacity: 0.6,
+  blending: THREE.AdditiveBlending,
+  vertexColors: true,
+  sizeAttenuation: true
+});
+const holoParticles = new THREE.Points(holoParticleGeo, holoParticleMat);
+hologramGroup.add(holoParticles);
+
+// Anillos de fusión
+const fusionColors = [0x5ff7e0, 0xff3d8a, 0xffcf5c];
+const fusionRings = [];
+for(let i = 0; i < 3; i++){
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(0.7 + i * 0.15, 0.015, 12, 48),
+    new THREE.MeshBasicMaterial({
+      color: fusionColors[i % 3],
+      transparent: true,
+      opacity: 0.2 + i * 0.05,
+      wireframe: true,
+      blending: THREE.AdditiveBlending
+    })
+  );
+  ring.rotation.x = Math.PI / 3 + i * 0.2;
+  ring.rotation.z = i * 0.3;
+  hologramGroup.add(ring);
+  fusionRings.push(ring);
+}
+
+// Etiqueta del holograma
+function createLabel(text, position, color=0x5ff7e0) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 80;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'rgba(0,0,0,0)';
+  ctx.fillRect(0, 0, 512, 80);
+  ctx.fillStyle = '#5ff7e0';
+  ctx.font = '30px Courier New';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, 256, 40);
+  const texture = new THREE.CanvasTexture(canvas);
+  const material = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+  const sprite = new THREE.Sprite(material);
+  sprite.position.copy(position);
+  sprite.scale.set(1.5, 0.3, 1);
+  return sprite;
+}
+
+const labelHolo = createLabel('✦ FUSIÓN DE OBRAS ✦', new THREE.Vector3(0, 1.1, 0));
+hologramGroup.add(labelHolo);
+
+/* ---------------------------------------------------------------------
+   2. SENSORES DE INTERACCIÓN (4 puntos - Nodo 3)
+--------------------------------------------------------------------- */
+const SENSOR_POSITIONS = [
+  { x: 0.6, z: 0.6, color: 0x5ff7e0, label: 'NORTE' },
+  { x: -0.6, z: 0.6, color: 0xff3d8a, label: 'SUR' },
+  { x: 0.6, z: -0.6, color: 0xffcf5c, label: 'ESTE' },
+  { x: -0.6, z: -0.6, color: 0xa347ff, label: 'OESTE' }
+];
+
+const sensors = [];
+SENSOR_POSITIONS.forEach((pos, index) => {
+  const group = new THREE.Group();
+  group.position.set(pos.x, 0.05, pos.z);
+
+  const sensorMat = new THREE.MeshBasicMaterial({
+    color: pos.color,
+    transparent: true,
+    opacity: 0.3,
+    blending: THREE.AdditiveBlending
+  });
+  const base = new THREE.Mesh(
+    new THREE.CircleGeometry(0.15, 16),
+    sensorMat
+  );
+  base.rotation.x = -Math.PI / 2;
+  group.add(base);
+
+  const ringSensor = new THREE.Mesh(
+    new THREE.RingGeometry(0.12, 0.18, 16),
+    new THREE.MeshBasicMaterial({
+      color: pos.color,
+      transparent: true,
+      opacity: 0.6,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending
+    })
+  );
+  ringSensor.rotation.x = -Math.PI / 2;
+  group.add(ringSensor);
+
+  const beamSensor = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.01, 0.01, 0.3, 8),
+    new THREE.MeshBasicMaterial({
+      color: pos.color,
+      transparent: true,
+      opacity: 0.3,
+      blending: THREE.AdditiveBlending
+    })
+  );
+  beamSensor.position.y = 0.15;
+  group.add(beamSensor);
+
+  const label = createLabel(pos.label, new THREE.Vector3(0, 0.5, 0), pos.color);
+  group.add(label);
+
+  scene.add(group);
+  sensors.push({ group, color: pos.color, index, ringSensor, beamSensor });
+});
+
+/* ---------------------------------------------------------------------
+   3. PANEL DE CONTROL CON REGLAS DE ACCIÓN
+--------------------------------------------------------------------- */
+function createRulesPanel() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 600;
+  canvas.height = 400;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#0a0d0e';
+  ctx.fillRect(0, 0, 600, 400);
+
+  ctx.strokeStyle = 'rgba(95,247,224,0.3)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(10, 10, 580, 380);
+
+  ctx.fillStyle = '#5ff7e0';
+  ctx.font = 'bold 18px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('✦ REGLAS DE ACCIÓN ✦', 300, 45);
+
+  ctx.fillStyle = '#9fb0b4';
+  ctx.font = '12px monospace';
+  ctx.fillText('coordenadas para interacción con holograma', 300, 70);
+
+  const rules = [
+    { dir: 'NORTE', action: 'Elegir fragmento de obra para fusión', color: '#5ff7e0' },
+    { dir: 'SUR', action: 'Cambio de color (líneas del metro)', color: '#ff3d8a' },
+    { dir: 'ESTE', action: 'Deformación (tamaño, rotación, estirar)', color: '#ffcf5c' },
+    { dir: 'OESTE', action: 'Subir quimera (activar sensores)', color: '#a347ff' }
+  ];
+
+  rules.forEach((r, i) => {
+    const y = 100 + i * 70;
+    ctx.fillStyle = r.color;
+    ctx.font = 'bold 14px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(`◈ ${r.dir}`, 40, y + 20);
+    ctx.fillStyle = '#c7d3d5';
+    ctx.font = '12px monospace';
+    ctx.fillText(r.action, 160, y + 20);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(30, y + 45);
+    ctx.lineTo(570, y + 45);
+    ctx.stroke();
+  });
+
+  ctx.fillStyle = '#5a6b70';
+  ctx.font = '10px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('SENSORES: ● ● ● ●', 40, 375);
+  ctx.fillStyle = '#5ff7e0';
+  ctx.fillText('ACTIVOS', 200, 375);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.encoding = THREE.sRGBEncoding;
+  return texture;
+}
+
+const rulesPanelMat = new THREE.MeshBasicMaterial({
+  map: createRulesPanel(),
+  toneMapped: false,
+  side: THREE.DoubleSide
+});
+const rulesPanel = new THREE.Mesh(
+  new THREE.PlaneGeometry(0.8, 0.55),
+  rulesPanelMat
+);
+rulesPanel.position.set(0.9, 0.6, 0.9);
+rulesPanel.rotation.y = -0.5;
+scene.add(rulesPanel);
+
+/* ---------------------------------------------------------------------
+   4. PANTALLAS DISTRIBUIDAS CON INFO DE OBRAS CURADAS
+--------------------------------------------------------------------- */
+const obraInfo = [
+  { titulo: 'ULA · Memoria y territorio', autor: 'Guache', estacion: 'Baquedano', color: '#5ff7e0' },
+  { titulo: 'Mujeres y tecnologías', autor: 'Ito Aranda', estacion: 'Universidad de Chile', color: '#ff3d8a' },
+  { titulo: 'Paisaje chileno', autor: 'Paula Muñoz', estacion: 'Los Héroes', color: '#ffcf5c' },
+];
+
+function createObraPanel(info, index) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 400;
+  canvas.height = 300;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#0a0d0e';
+  ctx.fillRect(0, 0, 400, 300);
+
+  ctx.strokeStyle = info.color + '66';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(10, 10, 380, 280);
+
+  ctx.fillStyle = info.color;
+  ctx.font = 'bold 16px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText(`✦ ${info.titulo}`, 25, 50);
+
+  ctx.fillStyle = '#c7d3d5';
+  ctx.font = '13px monospace';
+  ctx.fillText(`Autor: ${info.autor}`, 25, 85);
+  ctx.fillText(`Estación: ${info.estacion}`, 25, 110);
+
+  ctx.fillStyle = '#7d8d92';
+  ctx.font = '11px monospace';
+  const descripciones = [
+    'Memoria ancestral y territorio',
+    'Cuerpo, máquinas y tecnología',
+    'Cordillera, océano y desierto'
+  ];
+  ctx.fillText(descripciones[index % descripciones.length], 25, 150);
+
+  ctx.fillStyle = info.color;
+  ctx.font = '30px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('◈', 200, 230);
+
+  ctx.fillStyle = '#5a6b70';
+  ctx.font = '10px monospace';
+  ctx.fillText('← → conectar con otras obras', 200, 270);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.encoding = THREE.sRGBEncoding;
+  return texture;
+}
+
+const screenPositions = [
+  { az: 0.5, y: 1.2 },
+  { az: 2.0, y: 1.4 },
+  { az: 3.5, y: 1.0 }
+];
+
+obraInfo.forEach((info, index) => {
+  const pos = screenPositions[index % screenPositions.length];
+  const x = Math.sin(pos.az) * (baseRadius * 0.65);
+  const z = Math.cos(pos.az) * (baseRadius * 0.65);
+
+  const mat = new THREE.MeshBasicMaterial({
+    map: createObraPanel(info, index),
+    toneMapped: false,
+    side: THREE.DoubleSide
+  });
+  const panel = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.5, 0.38),
+    mat
+  );
+  panel.position.set(x, pos.y, z);
+  panel.lookAt(0, pos.y, 0);
+  scene.add(panel);
+});
+
+/* ---------------------------------------------------------------------
+   5. MAPA DE ESTACIONES CON FLUJOS DE INTERACCIÓN
+--------------------------------------------------------------------- */
+function createMapTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 800;
+  canvas.height = 600;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#0a0d0e';
+  ctx.fillRect(0, 0, 800, 600);
+
+  ctx.strokeStyle = 'rgba(95,247,224,0.15)';
+  ctx.lineWidth = 1;
+  for(let i = 0; i < 20; i += 2){
+    ctx.beginPath();
+    ctx.moveTo(0, i * 30);
+    ctx.lineTo(800, i * 30);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(i * 40, 0);
+    ctx.lineTo(i * 40, 600);
+    ctx.stroke();
+  }
+
+  const stations = [
+    { x: 200, y: 150, name: 'Baquedano', color: '#5ff7e0' },
+    { x: 500, y: 100, name: 'U. de Chile', color: '#ff3d8a' },
+    { x: 600, y: 350, name: 'Los Héroes', color: '#ffcf5c' },
+    { x: 300, y: 400, name: 'Estación Central', color: '#a347ff' },
+    { x: 100, y: 350, name: 'Plaza de Armas', color: '#5ff7e0' },
+    { x: 700, y: 200, name: 'Tobalaba', color: '#ff3d8a' },
+  ];
+
+  const connections = [
+    [0, 1], [1, 2], [2, 3], [3, 4], [4, 0], [1, 5], [2, 5]
+  ];
+
+  connections.forEach(([i, j]) => {
+    const a = stations[i];
+    const b = stations[j];
+    ctx.strokeStyle = 'rgba(95,247,224,0.2)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const midX = (a.x + b.x) / 2;
+    const midY = (a.y + b.y) / 2;
+    const angle = Math.atan2(b.y - a.y, b.x - a.x);
+    ctx.fillStyle = 'rgba(95,247,224,0.3)';
+    ctx.beginPath();
+    ctx.moveTo(midX + 10 * Math.cos(angle), midY + 10 * Math.sin(angle));
+    ctx.lineTo(midX - 5 * Math.cos(angle - 0.5), midY - 5 * Math.sin(angle - 0.5));
+    ctx.lineTo(midX - 5 * Math.cos(angle + 0.5), midY - 5 * Math.sin(angle + 0.5));
+    ctx.fill();
+  });
+
+  stations.forEach((s, i) => {
+    ctx.fillStyle = s.color + '33';
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, 18, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = s.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, 14, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = s.color;
+    ctx.globalAlpha = 0.6 + 0.4 * Math.sin(Date.now() / 1000 + i);
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    ctx.fillStyle = '#c7d3d5';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(s.name, s.x, s.y + 35);
+  });
+
+  ctx.fillStyle = '#5a6b70';
+  ctx.font = '10px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('✦ FLUJOS DE INTERACCIÓN', 30, 560);
+  ctx.fillStyle = 'rgba(95,247,224,0.3)';
+  ctx.fillText('● Estaciones activas', 250, 560);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.encoding = THREE.sRGBEncoding;
+  return texture;
+}
+
+const mapMat = new THREE.MeshBasicMaterial({
+  map: createMapTexture(),
+  toneMapped: false,
+  side: THREE.DoubleSide
+});
+const mapPanel = new THREE.Mesh(
+  new THREE.PlaneGeometry(0.9, 0.7),
+  mapMat
+);
+mapPanel.position.set(-0.7, 0.8, -0.7);
+mapPanel.rotation.y = 0.8;
+scene.add(mapPanel);
+
+/* ---------------------------------------------------------------------
+   LUCES INTERIORES
+--------------------------------------------------------------------- */
+const interiorMoodLight = new THREE.PointLight(0xff2e2e, 0.45, 5, 2);
+interiorMoodLight.position.set(0, 2.0, 0);
+scene.add(interiorMoodLight);
+
+const domeTopLight = new THREE.PointLight(0xfff0d0, 0.55, 10, 2);
+domeTopLight.position.set(0, DOME_HEIGHT*0.98, 0);
+scene.add(domeTopLight);
+
+const beamGeo = new THREE.CylinderGeometry(0.06, 1.1, DOME_HEIGHT*1.5, 24, 1, true);
+const beamMat = new THREE.MeshBasicMaterial({
+  color:0xfff0d0, transparent:true, opacity:0.05, side:THREE.DoubleSide, depthWrite:false
+});
+const beam = new THREE.Mesh(beamGeo, beamMat);
+beam.position.set(0, DOME_HEIGHT*0.7, 0);
+scene.add(beam);
+
+/* ---------------------------------------------------------------------
+   PANTALLA CURVA CON FRASES (ESPEJADA)
+--------------------------------------------------------------------- */
+const FRASES = [
+  "¿Cómo recorremos el Metro?",
+  "Origen → descubrimiento → interacción → desplazamiento → nueva obra",
+  "La estación deja de ser un punto de paso",
+  "El viaje es parte de la obra",
+  "Obra A + Obra B + usuario + IA = QUIMERA",
+  "ARTISTA + PATRIMONIO + TRANSEÚNTE + IA → QUIMERA",
+  "El patrimonio se convierte en punto de partida",
+  "Red de Experiencias Sensibles",
+  "Arte, patrimonio e interactividad",
+  "El Metro como mundo navegable",
+  "Dos estaciones generan una tercera obra",
+  "El cuerpo como interfaz",
+  "Memoria, territorio, identidad",
+  "La distancia se convierte en material artístico"
+];
+
+function createTextTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 2048;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#050708';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  grad.addColorStop(0, 'rgba(95,247,224,0.03)');
+  grad.addColorStop(0.5, 'rgba(255,61,138,0.03)');
+  grad.addColorStop(1, 'rgba(255,207,92,0.03)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = 'rgba(95,247,224,0.08)';
+  ctx.lineWidth = 2;
+  for(let i = 0; i < 12; i++){
+    const y = 60 + i * 80;
+    ctx.beginPath();
+    ctx.moveTo(40, y);
+    ctx.lineTo(canvas.width - 40, y);
+    ctx.stroke();
+  }
+
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+
+  const colors = ['#5ff7e0', '#ff3d8a', '#ffcf5c', '#e9f4f1'];
+  let yPos = 60;
+
+  FRASES.forEach((frase, index) => {
+    const color = colors[index % colors.length];
+    ctx.fillStyle = color;
+    ctx.font = `${36 + (index % 3) * 4}px 'Courier New', monospace`;
+    ctx.globalAlpha = 0.7 + 0.3 * (index / FRASES.length);
+    ctx.fillText(`✦ ${frase}`, 60, yPos);
+    yPos += 80;
+  });
+
+  ctx.globalAlpha = 1;
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.encoding = THREE.sRGBEncoding;
+  texture.anisotropy = 4;
+  return texture;
+}
+
+const CURVED_SCREEN_R = baseRadius * 0.84;
+const CURVED_SCREEN_Y0 = 0.6;
+const CURVED_SCREEN_Y1 = 2.8;
+const CURVED_SEGMENTS = 80;
+
+function buildCurvedScreenGeometry(azStart, azEnd, r, y0, y1, segments){
+  const geo = new THREE.BufferGeometry();
+  const verts = [], uvs = [], idx = [];
+  for(let i=0;i<=segments;i++){
+    const t = i/segments;
+    const az = azStart + (azEnd-azStart)*t;
+    const x = Math.sin(az)*r, z = Math.cos(az)*r;
+    verts.push(x,y0,z,  x,y1,z);
+    uvs.push(1 - t,0,  1 - t,1);
+  }
+  for(let i=0;i<segments;i++){
+    const a=i*2, b=i*2+1, c=i*2+2, d=i*2+3;
+    idx.push(a,b,c, b,d,c);
+  }
+  geo.setIndex(idx);
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(verts,3));
+  geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs,2));
+  geo.computeVertexNormals();
+  return geo;
+}
+
+const curvedScreenMat = new THREE.MeshBasicMaterial({
+  map: createTextTexture(),
+  toneMapped: false,
+  side: THREE.DoubleSide
+});
+
+const curvedScreenGeo = buildCurvedScreenGeometry(
+  SCREEN_AZ_START, SCREEN_AZ_END, CURVED_SCREEN_R,
+  CURVED_SCREEN_Y0, CURVED_SCREEN_Y1, CURVED_SEGMENTS
+);
+const curvedScreenMesh = new THREE.Mesh(curvedScreenGeo, curvedScreenMat);
+scene.add(curvedScreenMesh);
+
+const curvedBackingGeo = buildCurvedScreenGeometry(
+  SCREEN_AZ_START-0.02, SCREEN_AZ_END+0.02, CURVED_SCREEN_R+0.05,
+  CURVED_SCREEN_Y0-0.1, CURVED_SCREEN_Y1+0.1, CURVED_SEGMENTS
+);
+const curvedBacking = new THREE.Mesh(curvedBackingGeo,
+  new THREE.MeshStandardMaterial({ color:0x0a0d0e, roughness:0.6, metalness:0.4, side:THREE.DoubleSide })
+);
+scene.add(curvedBacking);
+
+const sectionLights = [
+  { az: SCREEN_AZ_START + (SCREEN_AZ_END-SCREEN_AZ_START)*(5/6), color:0x5ff7e0 },
+  { az: SCREEN_AZ_START + (SCREEN_AZ_END-SCREEN_AZ_START)*(3/6), color:0xff3d8a },
+  { az: SCREEN_AZ_START + (SCREEN_AZ_END-SCREEN_AZ_START)*(1/6), color:0xffcf5c },
+];
+sectionLights.forEach(s=>{
+  const lx = Math.sin(s.az)*(CURVED_SCREEN_R-0.5), lz = Math.cos(s.az)*(CURVED_SCREEN_R-0.5);
+  const light = new THREE.PointLight(s.color, 0.5, 3.0, 2);
+  light.position.set(lx, 1.8, lz);
+  scene.add(light);
+});
+
+/* ---------------------------------------------------------------------
+   PANEL DE CONTROL CENTRAL
+--------------------------------------------------------------------- */
+const PANEL_HEIGHT = 1.25;
+
+const pedestalMat = new THREE.MeshStandardMaterial({
+  color: 0x1a1e20,
+  roughness: 0.3,
+  metalness: 0.7,
+});
+const pedestal = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.08, 0.12, PANEL_HEIGHT - 0.15, 12),
+  pedestalMat
+);
+pedestal.position.set(0, (PANEL_HEIGHT - 0.15) / 2, 0);
+scene.add(pedestal);
+
+const panelBaseMat = new THREE.MeshStandardMaterial({
+  color: 0x2a2e30,
+  roughness: 0.4,
+  metalness: 0.6,
+});
+const panelBaseMesh = new THREE.Mesh(
+  new THREE.BoxGeometry(0.7, 0.06, 0.45),
+  panelBaseMat
+);
+panelBaseMesh.position.set(0, PANEL_HEIGHT - 0.03, 0);
+scene.add(panelBaseMesh);
+
+function createControlPanelTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 800;
+  canvas.height = 500;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#0a0d0e';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.strokeStyle = 'rgba(95,247,224,0.4)';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+
+  ctx.fillStyle = '#5ff7e0';
+  ctx.font = '600 36px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('PANEL DE CONTROL', canvas.width/2, 65);
+
+  ctx.fillStyle = '#9fb0b4';
+  ctx.font = '18px monospace';
+  ctx.fillText('generador de quimeras · red de experiencias sensibles', canvas.width/2, 105);
+
+  ctx.fillStyle = '#5ff7e0';
+  ctx.font = '14px monospace';
+  ctx.fillText('⚡ SISTEMA ACTIVO · ' + new Date().toLocaleTimeString(), canvas.width/2, 145);
+
+  const labels = ['VARIANTE 01', 'VARIANTE 02', 'VARIANTE 03'];
+  const bw = (canvas.width - 120) / 3;
+  const currentVariant = Math.floor(Date.now() / 3000) % 3;
+
+  labels.forEach((lb, i) => {
+    const x = 60 + i * bw;
+    const active = i === currentVariant;
+    ctx.fillStyle = active ? 'rgba(95,247,224,0.2)' : 'rgba(255,255,255,0.05)';
+    ctx.fillRect(x, 180, bw - 20, 80);
+    ctx.strokeStyle = active ? '#5ff7e0' : 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = active ? 3 : 1;
+    ctx.strokeRect(x, 180, bw - 20, 80);
+    ctx.fillStyle = active ? '#5ff7e0' : '#c7d3d5';
+    ctx.font = active ? '600 16px monospace' : '14px monospace';
+    ctx.fillText(lb, x + (bw - 20)/2, 228);
+    if(active){
+      ctx.fillStyle = 'rgba(95,247,224,0.1)';
+      ctx.fillRect(x + 5, 185, bw - 30, 4);
+    }
+  });
+
+  ctx.strokeStyle = 'rgba(95,247,224,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(40, 290);
+  ctx.lineTo(canvas.width - 40, 290);
+  ctx.stroke();
+
+  const nodos = ['📱 CELULAR', '🖥️ PANTALLAS', '👤 SENSORES'];
+  ctx.font = '13px monospace';
+  nodos.forEach((n, i) => {
+    const x = 60 + i * 240;
+    ctx.fillStyle = '#5a6b70';
+    ctx.fillText(n, x, 330);
+    ctx.fillStyle = '#5ff7e0';
+    ctx.font = '11px monospace';
+    ctx.fillText('● CONECTADO', x, 355);
+  });
+
+  ctx.fillStyle = '#7d8d92';
+  ctx.font = '12px monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('PARTICIPACIONES: ' + Math.floor(100 + Math.random() * 50), 60, 410);
+  ctx.fillText('QUIMERAS GENERADAS: ' + Math.floor(20 + Math.random() * 30), 300, 410);
+  ctx.fillText('ESTACIONES ACTIVAS: 10', 600, 410);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.encoding = THREE.sRGBEncoding;
+  texture.anisotropy = 4;
+  return texture;
+}
+
+const controlPanelMat = new THREE.MeshBasicMaterial({
+  map: createControlPanelTexture(),
+  toneMapped: false,
+  side: THREE.DoubleSide
+});
+const controlPanelMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(0.6, 0.4),
+  controlPanelMat
+);
+controlPanelMesh.position.set(0, PANEL_HEIGHT + 0.07, 0);
+controlPanelMesh.rotation.x = -Math.PI / 2.8;
+scene.add(controlPanelMesh);
+controlPanelMesh.userData.label = 'Panel de control · sistema de quimeras';
+
+const panelLight = new THREE.PointLight(0x5ff7e0, 0.3, 2.0, 2);
+panelLight.position.set(0, PANEL_HEIGHT + 0.3, 0);
+scene.add(panelLight);
+
+/* ---------------------------------------------------------------------
+   ILUMINACIÓN GENERAL
+--------------------------------------------------------------------- */
+function addLight(x, z, color=0xffeedd, intensity=1.2) {
+    const light = new THREE.PointLight(color, intensity, 15, 2);
+    light.position.set(x, ROOM_HEIGHT - 0.5, z);
+    scene.add(light);
+    const bulbMat = new THREE.MeshBasicMaterial({ color: 0xfff5e6, transparent: true, opacity: 0.15 });
+    const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), bulbMat);
+    bulb.position.copy(light.position);
+    scene.add(bulb);
+}
+
+addLight(-5, -5, 0xffeedd, 1.0);
+addLight(5, -5, 0xffeedd, 1.0);
+addLight(-5, 5, 0xffeedd, 1.0);
+addLight(5, 5, 0xffeedd, 1.0);
+addLight(0, 0, 0xfff5e6, 1.5);
+
+const ambientLight = new THREE.AmbientLight(0x8899aa, 0.5);
+scene.add(ambientLight);
+
+const dirLight = new THREE.DirectionalLight(0xfff0e0, 0.5);
+dirLight.position.set(2, 8, 4);
+scene.add(dirLight);
+
+/* ---------------------------------------------------------------------
+   CONTROLES
+--------------------------------------------------------------------- */
+const startDist = baseRadius + 4.5;
+camera.position.set(
+  Math.sin(DOOR_AZIMUTH)*startDist,
+  EYE_H,
+  Math.cos(DOOR_AZIMUTH)*startDist
+);
+let yaw = -Math.PI/2, pitch = 0;
+const moveState = { fwd:0, strafe:0 };
+const keys = {};
+const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints>0;
+
+document.addEventListener('keydown', e=>{ keys[e.code]=true; });
+document.addEventListener('keyup',   e=>{ keys[e.code]=false; });
+
+function applyKeyboard(){
+  let f=0, s=0;
+  if(keys['KeyW']||keys['ArrowUp'])    f+=1;
+  if(keys['KeyS']||keys['ArrowDown'])  f-=1;
+  if(keys['KeyD']||keys['ArrowRight']) s+=1;
+  if(keys['KeyA']||keys['ArrowLeft'])  s-=1;
+  moveState.fwd = f; moveState.strafe = s;
+}
+
+let dragging=false, lastX=0, lastY=0;
+renderer.domElement.addEventListener('mousedown', e=>{ dragging=true; lastX=e.clientX; lastY=e.clientY; });
+window.addEventListener('mouseup', ()=> dragging=false);
+window.addEventListener('mousemove', e=>{
+  if(!dragging) return;
+  const dx=e.clientX-lastX, dy=e.clientY-lastY;
+  lastX=e.clientX; lastY=e.clientY;
+  yaw -= dx*0.0032;
+  pitch -= dy*0.0032;
+  pitch = Math.max(-1.3, Math.min(1.3, pitch));
+});
+
+const joyMoveEl = document.getElementById('joyMove');
+const joyLookEl = document.getElementById('joyLook');
+let moveTouchId=null, lookTouchId=null;
+let moveOrigin={x:0,y:0}, lookLast={x:0,y:0};
+const JOY_MAX = 44;
+
+function showJoy(el, x, y){ el.style.left=(x-48)+'px'; el.style.top=(y-48)+'px'; el.style.display='block'; }
+function hideJoy(el){ el.style.display='none'; el.querySelector('.knob').style.transform='translate(0,0)'; }
+
+renderer.domElement.addEventListener('touchstart', e=>{
+  for(const t of e.changedTouches){
+    const half = window.innerWidth/2;
+    if(t.clientX < half && moveTouchId===null){
+      moveTouchId = t.identifier;
+      moveOrigin = {x:t.clientX, y:t.clientY};
+      showJoy(joyMoveEl, t.clientX, t.clientY);
+    } else if(t.clientX >= half && lookTouchId===null){
+      lookTouchId = t.identifier;
+      lookLast = {x:t.clientX, y:t.clientY};
+      showJoy(joyLookEl, t.clientX, t.clientY);
+    }
+  }
+}, {passive:true});
+
+renderer.domElement.addEventListener('touchmove', e=>{
+  for(const t of e.changedTouches){
+    if(t.identifier===moveTouchId){
+      let dx=t.clientX-moveOrigin.x, dy=t.clientY-moveOrigin.y;
+      const len=Math.hypot(dx,dy);
+      if(len>JOY_MAX){ dx=dx/len*JOY_MAX; dy=dy/len*JOY_MAX; }
+      joyMoveEl.querySelector('.knob').style.transform = `translate(${dx}px,${dy}px)`;
+      moveState.fwd = -dy/JOY_MAX;
+      moveState.strafe = dx/JOY_MAX;
+    } else if(t.identifier===lookTouchId){
+      const dx=t.clientX-lookLast.x, dy=t.clientY-lookLast.y;
+      lookLast={x:t.clientX,y:t.clientY};
+      yaw -= dx*0.0045;
+      pitch -= dy*0.0045;
+      pitch = Math.max(-1.3, Math.min(1.3, pitch));
+    }
+  }
+}, {passive:true});
+
+function endTouch(e){
+  for(const t of e.changedTouches){
+    if(t.identifier===moveTouchId){ moveTouchId=null; moveState.fwd=0; moveState.strafe=0; hideJoy(joyMoveEl); }
+    if(t.identifier===lookTouchId){ lookTouchId=null; hideJoy(joyLookEl); }
+  }
+}
+renderer.domElement.addEventListener('touchend', endTouch);
+renderer.domElement.addEventListener('touchcancel', endTouch);
+
+if(!isTouch) document.getElementById('crosshair').style.display = 'block';
+else document.getElementById('touchZones').style.display = 'block';
+
+/* ---------------------------------------------------------------------
+   BUCLE DE ANIMACION
+--------------------------------------------------------------------- */
+const clock = new THREE.Clock();
+const SPEED = 1.6;
+const panelLabelEl = document.getElementById('panelLabel');
+const coordsOut = document.getElementById('coordsOut');
+const controlBtnEl = document.getElementById('controlBtn');
+controlBtnEl.addEventListener('click', ()=>{
+  controlPanelMat.map = createControlPanelTexture();
+  controlPanelMat.needsUpdate = true;
+  rulesPanelMat.map = createRulesPanel();
+  rulesPanelMat.needsUpdate = true;
+});
+
+const COLOR_CYCLE = [0xff2e2e, 0x33e07a, 0x3a7bff, 0xffe14d, 0xa347ff].map(c=>new THREE.Color(c));
+const CYCLE_SECONDS = 4.5;
+const cA = new THREE.Color(), cB = new THREE.Color(), cOut = new THREE.Color();
+
+function collide(current, desired){
+  const wallR = domeRadiusAt(EYE_H);
+  const curR = Math.hypot(current.x, current.z);
+  const desR = Math.hypot(desired.x, desired.z);
+  const az = Math.atan2(desired.x, desired.z);
+  const doorOpen = angleDelta(az, DOOR_AZIMUTH) < DOOR_HALF_WIDTH;
+  if((curR - wallR) * (desR - wallR) < 0 && !doorOpen){
+    return current;
+  }
+  const half = ROOM_HALF - 0.5;
+  if(Math.abs(desired.x) > half || Math.abs(desired.z) > half) {
+      const clampedX = Math.max(-half, Math.min(half, desired.x));
+      const clampedZ = Math.max(-half, Math.min(half, desired.z));
+      return new THREE.Vector3(clampedX, desired.y, clampedZ);
+  }
+  return desired;
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t = performance.now()*0.001;
+
+  applyKeyboard();
+
+  camera.rotation.order='YXZ';
+  camera.rotation.y = yaw;
+  camera.rotation.x = pitch;
+
+  const forward = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)).multiplyScalar(-1);
+  const right = new THREE.Vector3(Math.sin(yaw+Math.PI/2), 0, Math.cos(yaw+Math.PI/2)).multiplyScalar(-1);
+
+  const move = new THREE.Vector3();
+  move.addScaledVector(forward, moveState.fwd);
+  move.addScaledVector(right, moveState.strafe);
+  if(move.lengthSq()>0){ move.normalize().multiplyScalar(SPEED*dt); }
+
+  const desired = camera.position.clone().add(move);
+  const resolved = collide(camera.position, desired);
+  camera.position.x = resolved.x;
+  camera.position.z = resolved.z;
+  camera.position.y = EYE_H;
+
+  const insideDome = Math.hypot(camera.position.x,camera.position.z) < domeRadiusAt(EYE_H);
+  const camAz = Math.atan2(camera.position.x, camera.position.z);
+
+  let labelText = '';
+  if(insideDome){
+    labelText = 'INTERIOR DEL DOMO · Holograma · Sensores · Panel de control';
+    controlBtnEl.classList.add('visible');
+  } else {
+    controlBtnEl.classList.remove('visible');
+    const distToChimeraBack = camera.position.distanceTo(chimeraBack.position);
+    const distToChimeraFront = camera.position.distanceTo(chimeraFront.position);
+    if(distToChimeraBack < 3.0 || distToChimeraFront < 3.0){
+      labelText = '✦ QUIMERA VR · Realidad Aumentada ✦';
+    } else {
+      labelText = 'EXPLANADA · Espacio blanco · Domo geodésico';
+    }
+  }
+  if(labelText){
+    panelLabelEl.textContent = labelText;
+    panelLabelEl.style.opacity = 1;
+  } else {
+    panelLabelEl.style.opacity = 0;
+  }
+
+  coordsOut.textContent = (insideDome?'INTERIOR':'EXTERIOR') +
+    `  ·  x ${camera.position.x.toFixed(1)}   z ${camera.position.z.toFixed(1)}`;
+
+  // Animación quimeras VR exteriores
+  chimeraBack.rotation.y = t * 0.15;
+  chimeraBack.position.y = chimeraBackPos.y + Math.sin(t * 0.4) * 0.3;
+
+  chimeraFront.rotation.y = -t * 0.2;
+  chimeraFront.position.y = chimeraFrontPos.y + Math.sin(t * 0.5 + 1.0) * 0.4;
+  chimeraFront.rotation.x = Math.sin(t * 0.3) * 0.1;
+
+  // Animación holograma central
+  hologramGroup.rotation.y = t * 0.1;
+  hologramCore.scale.setScalar(1 + Math.sin(t * 0.5) * 0.05);
+
+  fusionRings.forEach((ring, i) => {
+    ring.rotation.z = t * (0.2 + i * 0.1) + i * 0.5;
+    ring.rotation.x = Math.PI / 3 + Math.sin(t * 0.2 + i) * 0.2;
+    ring.material.opacity = 0.15 + Math.sin(t * 0.5 + i * 1.5) * 0.1;
+  });
+
+  holoParticles.rotation.y = t * 0.15;
+  holoParticles.rotation.x = Math.sin(t * 0.1) * 0.05;
+
+  // Sensores - animación pulsante
+  sensors.forEach((sensor, idx) => {
+    const scale = 1 + 0.3 * Math.sin(t * 1.5 + idx * 1.2);
+    sensor.ringSensor.scale.set(scale, scale, 1);
+    sensor.ringSensor.material.opacity = 0.4 + 0.3 * Math.sin(t * 1.5 + idx * 1.2);
+    sensor.beamSensor.scale.y = 1 + 0.3 * Math.sin(t * 1.5 + idx * 1.2);
+  });
+
+  // Nodos en movimiento
+  floorTravelers.forEach(d=>{
+    const u = d.userData;
+    const travel = u.offset + 0.3 * (0.5 + 0.5 * Math.sin(t * u.speed + u.phase));
+    const r = u.lenWorld * travel;
+    d.position.x = Math.sin(u.az) * r;
+    d.position.z = Math.cos(u.az) * r;
+    d.scale.setScalar(0.8 + 0.3 * Math.sin(t * 1.5 + u.phase));
+    d.material.opacity = 0.5 + 0.4 * Math.sin(t * 1.2 + u.phase * 0.5);
+  });
+
+  lineMesh.rotation.y = t * 0.02;
+  lineMesh2.rotation.y = -t * 0.015;
+
+  // Color interior del domo
+  const n = COLOR_CYCLE.length;
+  const phase = (t / CYCLE_SECONDS) % n;
+  const idx = Math.floor(phase);
+  const frac = phase - idx;
+  cA.copy(COLOR_CYCLE[idx]);
+  cB.copy(COLOR_CYCLE[(idx+1)%n]);
+  cOut.copy(cA).lerp(cB, frac);
+  innerGlowMat.emissive.copy(cOut);
+  interiorMoodLight.color.copy(cOut);
+
+  // Actualizar paneles
+  if(Math.floor(t * 2) % 2 === 0){
+    controlPanelMat.map = createControlPanelTexture();
+    controlPanelMat.needsUpdate = true;
+  }
+
+  domeTopLight.intensity = 0.55 + Math.sin(t*0.7)*0.08;
+
+  renderer.render(scene, camera);
+}
+animate();
+
+window.addEventListener('resize', ()=>{
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+})();
+</script>
+</body>
+</html>
