@@ -5,8 +5,8 @@
 #### Cultura web y arte digital.
 
 ## Índice:
-1. [Semana 1](#semana-1) <br>
-2. [Semana 2](#semana-2-enlaces-links) <br>
+1. [Semana 1](#mi-primera-página) <br>. 
+2. [Semana 2](#enlaces-links) <br>
 3. [Semana 3](#semana-3-mini-sitio-3-páginas-conectadas) <br>
 4. [Semana 4](#semana-4-css-intermedio-interacción-y-layout) <br>
 
@@ -82,7 +82,7 @@ MULTIMEDIAL
 <!-- Fin del documento HTML -->
 ```
 
-## Semana 2: Enlaces (links)
+## Enlaces (links)
 #### Ejemplo 1 básico:
 ```html
 <a href="pagina2.html">Ir a la página 2</a>
