@@ -10,7 +10,7 @@
 3. [Semana 3](#semana-3-mini-sitio-3-páginas-conectadas) <br>
 4. [Semana 4](#semana-4-css-intermedio-interacción-y-layout) <br>
 
-## Semana 1:
+## Mi primera página:
 ``` html
 <!DOCTYPE html>
 <!-- Indica al navegador que este documento usa HTML5 -->
