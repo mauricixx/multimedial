@@ -5,7 +5,7 @@
 #### Cultura web y arte digital.
 
 ## Índice:
-1. [Mi Primera página.](#mi-primera-página) <br>. 
+1. [Mi Primera página.](#mi-primera-página) <br> 
 2. [Enlaces -  Links](#enlaces-links) <br>
 3. [Mini sitio / 3 páginas conectadas](#mini-sitio-3-páginas-conectadas) <br>
 4. [css-intermedio-interacción-y-layout](#css-intermedio-interacción-y-layout) <br>
