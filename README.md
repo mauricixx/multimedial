@@ -10,7 +10,7 @@
 3. [Mini sitio / 3 páginas conectadas](#mini-sitio-3-páginas-conectadas) <br>
 4. [css-intermedio-interacción-y-layout](#css-intermedio-interacción-y-layout) <br>
 
-## Mi primera página:
+## 1. Mi primera página:
 ``` html
 <!DOCTYPE html>
 <!-- Indica al navegador que este documento usa HTML5 -->
@@ -82,7 +82,7 @@ MULTIMEDIAL
 <!-- Fin del documento HTML -->
 ```
 
-## Enlaces (links)
+## 2. Enlaces (links)
 #### Ejemplo 1 básico:
 ```html
 <a href="pagina2.html">Ir a la página 2</a>
@@ -162,7 +162,7 @@ es un atributo de HTML que significa Hypertext Reference (Referencia de Hipertex
 src → ruta de la imagen
 alt → texto alternativo (muy importante, describe la imagen)
 
-## Semana 3: Mini sitio (3 páginas conectadas)
+## 3. Mini sitio (3 páginas conectadas)
 Objetivo: pensar en estructura + narrativa.
 
 #### Crear 3 páginas:
@@ -599,7 +599,7 @@ Un div puede tener varias clases:
 4.	Agreguen otro .bloque
 
 
-## Semana 4. CSS Intermedio (Interacción y Layout)
+## 4. CSS Intermedio (Interacción y Layout)
 #### Objetivo general
 - Introducir hover (interacción)
 - Entender flexbox (alineación)
