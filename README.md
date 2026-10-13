@@ -2,8 +2,8 @@
 
 ## Exploración creativa de arte, tecnología y medios digitales interactivos.
 
-## I. 
-### Hipervicunlo ><><><
+### index:
+## I.  Hipervicunlo ><><><
 1. [Mi Primera página.](#mi-primera-página) <br> 
 2. [Enlaces -  Links](#2-enlaces-links) <br> 
 3. [Mini sitio / 3 páginas conectadas](#3-mini-sitio-3-páginas-conectadas) <br> 
@@ -11,6 +11,8 @@
 
 ## II. [Programación visual creativa basada en nodos](#programación-visual-creativa-basada-en-nodos) <br>
 
+
+-------
 #### 1. Mi primera página:
 ``` html
 <!DOCTYPE html>
