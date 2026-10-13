@@ -2,10 +2,8 @@
 
 ## Exploración creativa de arte, tecnología y medios digitales interactivos.
 
-### I. Hipervicunlo ><><><
-##### Cultura web y arte digital.
-
-## ls:
+### I. 
+### Hipervicunlo ><><><
 1. [Mi Primera página.](#mi-primera-página) <br> 
 2. [Enlaces -  Links](#2-enlaces-links) <br> 
 3. [Mini sitio / 3 páginas conectadas](#3-mini-sitio-3-páginas-conectadas) <br> 
@@ -883,9 +881,12 @@ body {
 ```
 
 
-## Unidad II: INTRODUCCIÓN Y FUNDAMENTOS.
+### II: 
+### Programación visual creativa basada en nodos. 
+#### Un caso paradigmal: TouchDesigner. 
+#### INTRODUCCIÓN Y FUNDAMENTOS.
 
-#### Clase 1: Bienvenida a [TouchDesigner](https://derivative.ca).
+#### 1: Intro a [TouchDesigner](https://derivative.ca).
 
 **Objetivos:**
 - Entender qué es TouchDesigner y sus aplicaciones
@@ -893,41 +894,18 @@ body {
 - Crear el primer proyecto.
 
 **Contenidos:**
-- ¿Qué es TouchDesigner? Historia y usos profesionales
-- Instalación y configuración inicial
-- Tour por la interfaz: Network Editor, Palette, Parameters
-- Conceptos: Operators (OPs), familias de operadores
-- Navegación: zoom, pan, conexiones
-- Proyecto práctico: "Hola Mundo" visual
-
-**Tarea:**
-Explorar la interfaz y crear 3 pequeñas redes usando diferentes familias de OPs
-
-#### - Qué es TouchDesigner? 
+- ¿Qué es TouchDesigner? Historia y usos profesionales:
 > Es un lenguaje de programación visual basado en nodos para contenido multimedia interactivo en tiempo real . Desarrollado por la empresa  ["Derivative"](https://derivative.ca) de Toronto, es utilizado frecuentemente por artistas, programadores, codificadores creativos, diseñadores de software y artistas para crear performances, instalaciones y obras multimedia fijas. [1](https://en.wikipedia.org/wiki/TouchDesigner)
 
-### Clase 2: Las Familias de Operadores
-**Duración:** 90 minutos
+- Instalación y configuración inicial.
+- Tour por la interfaz: Network Editor, Palette, Parameters.
+- Conceptos: Operators (OPs), familias de operadores.
+- Navegación: zoom, pan, conexiones
+- Proyecto práctico.
 
-**Objetivos:**
-- Comprender las 6 familias de operadores
-- Entender el flujo de datos en TouchDesigner
-- Crear conexiones básicas
+* Canasta de proyectos:
+Nube de puntos con Pop basada en imágenes, Lsystem, Mapping básico.
 
-**Contenidos:**
-- TOPs (Texture Operators) - Procesamiento de imágenes 2D
-- CHOPs (Channel Operators) - Datos numéricos y animación
-- SOPs (Surface Operators) - Geometría 3D
-- MATs (Materials) - Shaders y texturas
-- DATs (Data Operators) - Texto y datos
-- COMPs (Components) - Contenedores y componentes
-- Conectar diferentes familias
-- Ejercicio: Cadena simple con cada familia
 
-**Tarea:**
-Crear un diagrama de red usando al menos 4 familias diferentes
-
----
--->
 
 
