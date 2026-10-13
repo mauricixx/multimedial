@@ -2,7 +2,7 @@
 
 ## Exploración creativa de arte, tecnología y medios digitales interactivos.
 
-### index:
+### index
 ## Unidad I.  [Hipervicunlo ><><><](#unidad-i--hipervicunlo-) <br> 
 1. [Mi Primera página.](#mi-primera-página) <br> 
 2. [Enlaces -  Links](#2-enlaces-links) <br> 
