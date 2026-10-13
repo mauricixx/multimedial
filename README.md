@@ -912,6 +912,7 @@ body {
 
 #### 2. Canasta de ejercicios:
 Nube de puntos con Pop basada en imágenes, Lsystem, Mapping básico.
+[Ejercicios:](https://drive.google.com/drive/folders/14iyXsOvZwlD-uWK481S4XWNlthqRB1o0?usp=sharing)
 
 
 
