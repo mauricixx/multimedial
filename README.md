@@ -910,7 +910,7 @@ body {
 - Navegación: zoom, pan, conexiones
 - Proyecto práctico.
 
- #### 2. Canasta de ejercicios:
+#### 2. Canasta de ejercicios:
 Nube de puntos con Pop basada en imágenes, Lsystem, Mapping básico.
 
 
