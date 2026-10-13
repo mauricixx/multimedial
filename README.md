@@ -12,8 +12,10 @@
 ## Unidad II. [Programación visual creativa basada en nodos](#programación-visual-creativa-basada-en-nodos) <br>
 1. [Intro ToucDesigner](#1-intro-a-touchdesigner) <br>
 2. [Ejercicios:](#2-canasta-de-ejercicios) <br>
-- Nube de puntos con Pop basada en imágenes, Lsystem, Mapping básico.
--------
+- ##### Nube de puntos con Pop basada en imágenes, Lsystem, Mapping básico 
+
+*
+
 ## Unidad I.  Hipervicunlo ><><><
 #### 1. Mi primera página:
 ``` html
