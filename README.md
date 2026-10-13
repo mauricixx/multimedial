@@ -10,7 +10,8 @@
 4. [css-intermedio-interacción-y-layout](#4-css-intermedio-interacción-y-layout) <br>
 
 ## Unidad II. [Programación visual creativa basada en nodos](#programación-visual-creativa-basada-en-nodos) <br>
-
+1. [Intro ToucDesigner](#1-intro-a-touchdesigner) <br>
+2. Ejercicios: Points, LSystem, 
 
 -------
 ## Unidad I.  Hipervicunlo ><><><
