@@ -9,6 +9,8 @@
 3. [Mini sitio / 3 páginas conectadas](#3-mini-sitio-3-páginas-conectadas) <br> 
 4. [css-intermedio-interacción-y-layout](#4-css-intermedio-interacción-y-layout) <br>
 
+Resultados página web:(https://mauricixx.github.io/multimedial/w/index.html)
+
 ## Unidad II. [Programación visual creativa basada en nodos](#programación-visual-creativa-basada-en-nodos) <br>
 1. [Intro ToucDesigner](#1-intro-a-touchdesigner) <br>
 2. [Ejercicios:](#2-canasta-de-ejercicios) <br>
@@ -911,9 +913,13 @@ body {
 - Proyecto práctico.
 
 #### 2. Canasta de ejercicios:
-Nube de puntos con Pop basada en imágenes, Lsystem, Mapping básico.
-[Ejercicios:](https://drive.google.com/drive/folders/14iyXsOvZwlD-uWK481S4XWNlthqRB1o0?usp=sharing)
+- Ejercicios: [Nube de puntos con POP basada en imágenes](https://drive.google.com/drive/folders/1I_xNtbnLpvJ8vhu4z0bfWQpn2Uv-I8Sl?usp=sharing)
 
 
+
+(https://drive.google.com/drive/folders/14iyXsOvZwlD-uWK481S4XWNlthqRB1o0?usp=sharing), [L-system]
+
+
+(https://drive.google.com/drive/folders/14iyXsOvZwlD-uWK481S4XWNlthqRB1o0?usp=sharing) y [Mapping básico](https://drive.google.com/drive/folders/14iyXsOvZwlD-uWK481S4XWNlthqRB1o0?usp=sharing).
 
 
