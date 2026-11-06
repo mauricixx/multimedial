@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lluvia de Letras - Multimedial</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            z-index: 10;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 80px;
+            color: #00d9ff;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(0, 217, 255, 0.8);
+            letter-spacing: 5px;
+            margin-bottom: 40px;
+        }
+
+        a {
+            text-decoration: none;
+            color: white;
+            font-size: 20px;
+            padding: 12px 30px;
+            border: 2px solid #00d9ff;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin: 0 10px;
+        }
+
+        a:hover {
+            background-color: #00d9ff;
+            color: #1a1a2e;
+            transform: scale(1.1);
+        }
+
+        .button-container {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        button {
+            color: white;
+            font-size: 18px;
+            padding: 12px 30px;
+            border: 2px solid #ff006e;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            background-color: rgba(255, 0, 110, 0.2);
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #ff006e;
+            color: #1a1a2e;
+            transform: scale(1.1);
+        }
+
+        .rain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .line {
+            position: absolute;
+            width: 4px;
+            height: 160px;
+            border-radius: 4px;
+            opacity: 0.9;
+            animation: fall linear infinite;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.35));
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(110vh) rotate(10deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="rain" id="rain"></div>
+    
+    <div class="container">
+        <div class="button-container">
+            <button id="toggleSound">Pausar Sonido</button>
+            <a href="amor.html">Volver</a>
+        </div>
+    </div>
+
+    <script>
+        // Inicializar Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        const rain = document.getElementById('rain');
+        let soundEnabled = true;
+        const toggleButton = document.getElementById('toggleSound');
+
+        function playMicrotoneSound() {
+            if (!soundEnabled) return;
+            
+            const now = audioContext.currentTime;
+            const duration = 3; // Sonido más largo como campana
+            const baseFreq = 120 + Math.random() * 180;
+            
+            const osc1 = audioContext.createOscillator();
+            const gain1 = audioContext.createGain();
+            osc1.connect(gain1);
+            gain1.connect(audioContext.destination);
+            osc1.frequency.value = baseFreq;
+            osc1.type = 'triangle';
+            gain1.gain.setValueAtTime(0.28, now);
+            gain1.gain.exponentialRampToValueAtTime(0.01, now + duration);
+            osc1.start(now);
+            osc1.stop(now + duration);
+
+            const osc2 = audioContext.createOscillator();
+            const gain2 = audioContext.createGain();
+            osc2.connect(gain2);
+            gain2.connect(audioContext.destination);
+            osc2.frequency.value = baseFreq * 1.45;
+            osc2.type = 'sine';
+            gain2.gain.setValueAtTime(0.2, now);
+            gain2.gain.exponentialRampToValueAtTime(0.008, now + duration);
+            osc2.start(now);
+            osc2.stop(now + duration);
+
+            const osc3 = audioContext.createOscillator();
+            const gain3 = audioContext.createGain();
+            osc3.connect(gain3);
+            gain3.connect(audioContext.destination);
+            osc3.frequency.value = baseFreq * 2.4;
+            osc3.type = 'sine';
+            gain3.gain.setValueAtTime(0.18, now);
+            gain3.gain.exponentialRampToValueAtTime(0.006, now + duration);
+            osc3.start(now);
+            osc3.stop(now + duration);
+
+            const vibratoLfo = audioContext.createOscillator();
+            const vibratoGain = audioContext.createGain();
+            vibratoLfo.frequency.value = 4 + Math.random() * 2;
+            vibratoGain.gain.value = 4;
+            vibratoLfo.connect(vibratoGain);
+            vibratoGain.connect(osc1.frequency);
+            vibratoLfo.start(now);
+            vibratoLfo.stop(now + duration);
+        }
+
+        function createLine() {
+            const line = document.createElement('div');
+            line.className = 'line';
+
+            const width = 3 + Math.random() * 8;
+            const height = 100 + Math.random() * 180;
+            const hue = Math.floor(Math.random() * 360);
+            const saturation = 80 + Math.random() * 20;
+            const lightness = 55 + Math.random() * 15;
+            const randomX = Math.random() * window.innerWidth;
+            const randomRotation = (Math.random() - 0.5) * 20;
+            const randomDuration = 2 + Math.random() * 3;
+            const randomDelay = Math.random() * 2;
+
+            line.style.width = `${width}px`;
+            line.style.height = `${height}px`;
+            line.style.left = `${randomX}px`;
+            line.style.top = `-${height}px`;
+            line.style.background = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+            line.style.opacity = 0.75;
+            line.style.transform = `rotate(${randomRotation}deg)`;
+            line.style.animationDuration = `${randomDuration}s`;
+            line.style.animationDelay = `${randomDelay}s`;
+
+            rain.appendChild(line);
+            playMicrotoneSound();
+
+            setTimeout(() => {
+                line.remove();
+            }, (randomDuration + randomDelay) * 1000 + 500);
+        }
+
+        // Crear líneas continuamente
+        setInterval(createLine, 120);
+
+        // Control del botón de pausar/reanudar sonido
+        toggleButton.addEventListener('click', function() {
+            soundEnabled = !soundEnabled;
+            toggleButton.textContent = soundEnabled ? 'Pausar Sonido' : 'Reanudar Sonido';
+        });
+    </script>
+</body>
+</html>
