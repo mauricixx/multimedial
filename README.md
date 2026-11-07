@@ -4,6 +4,10 @@
     background-color: #a9a9b7;
     color: #eaeaea;
   }
+  pre {
+    background-color: #000;
+    color: #eaeaea;
+  }
 </style>
 
 ## Exploración creativa de arte, tecnología y medios digitales interactivos.
