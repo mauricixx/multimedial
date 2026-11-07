@@ -1,10 +1,16 @@
-<img src="https://mauricixx.github.io/multimedial/img/Multimedial_gif.gif" width="auto" height="auto" />
 <style>
   body {
     background-color: #a9a9b7;
     color: #eaeaea;
   }
+  pre {
+    background-color: #000;
+    color: #eaeaea;
+  }
 </style>
+
+<img src="https://mauricixx.github.io/multimedial/img/Multimedial_gif.gif" width="auto" height="auto" />
+
 
 ## Exploración creativa de arte, tecnología y medios digitales interactivos.
 
