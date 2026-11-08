@@ -1,4 +1,8 @@
 <style>
+    body {
+    background-color: #a9a9b7;
+    color: #eaeaea;
+  }
   div.highlighter-rouge,
   div.highlighter-rouge .highlight,
   div.highlighter-rouge pre {
