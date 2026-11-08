@@ -1,11 +1,20 @@
 <style>
-  body {
-    background-color: #a9a9b7;
-    color: #eaeaea;
-  }
-  pre {
+  div.highlighter-rouge,
+  div.highlighter-rouge .highlight,
+  div.highlighter-rouge pre {
     background-color: #000;
-    color: #eaeaea;
+    color: #f2f2f2;
+  }
+
+  div.highlighter-rouge pre {
+    padding: 1em;
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+
+  div.highlighter-rouge code {
+    background: transparent;
+    color: inherit;
   }
 </style>
 
